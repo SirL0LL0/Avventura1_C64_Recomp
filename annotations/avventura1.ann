@@ -1,0 +1,233 @@
+# Annotazioni per "Avventura 1 (fantasy)" - C64
+# Solo metadati nostri (nomi, commenti, regioni): nessun byte del gioco originale.
+# Formato: vedi tools/disasm.py
+#
+# MAPPA DI MEMORIA (dopo il boot)
+#   $0801-$081D  stub BASIC azzerato (era la riga SYS)
+#   $081E-$1783  runtime del compilatore BASIC (VM a P-code)
+#   $1784-$179E  header del programma compilato (puntatori)
+#   $179F-$1AC3  dati delle istruzioni DATA (stringhe con prefisso di lunghezza)
+#   $1AC4-$7DAC  P-code del programma BASIC compilato
+#   $7DAD-$80F4  area variabili (VARTAB..STREND)
+
+# --- KERNAL ------------------------------------------------------------------
+equ CHKIN   $FFC6
+equ CHKOUT  $FFC9
+equ CLRCHN  $FFCC
+equ CHRIN   $FFCF
+equ CHROUT  $FFD2
+equ GETIN   $FFE4
+equ CLALL   $FFE7
+equ PLOT    $FFF0
+
+# --- BASIC ROM (solo nomi certi; gli altri restano numerici) ------------------
+equ b_REASON  $A408
+equ b_OMERR   $A435
+equ b_ERROR   $A437
+equ b_NEWSTT  $A7AE
+equ b_CRDO    $AAD7
+equ b_OUTSPC  $AB3B
+equ b_SNERR   $AF08
+equ b_FCERR   $B248
+equ b_STRSPA  $B475
+equ b_PUTNEW  $B4CA
+equ b_MOVINS  $B67A
+equ b_MOVSTR  $B68C
+equ b_FREFAC  $B6AA
+equ b_FRETMS  $B6DB
+equ b_FADD    $B867
+equ b_MOVFM   $BBA2
+equ b_ROUND   $BC1B
+equ b_SIGN    $BC2B
+equ b_FCOMP   $BC5B
+equ b_INT     $BCCC
+equ b_FIN     $BCF3
+equ b_FOUT    $BDDD
+equ b_NEGOP   $BFB4
+
+# --- zero page usata dalla VM --------------------------------------------------
+# $39/$3A  PC del P-code (riusa CURLIN del BASIC)
+# $3C      opcode corrente
+# $55/$56  vettore di dispatch (JMP ($0055))
+# $2D-$32  VARTAB/ARYTAB/STREND (copiati dall'header)
+# $41/$42  DATPTR (puntatore DATA)
+
+# --- regioni -------------------------------------------------------------------
+bytes $0801-$081E
+comment $0801 Stub BASIC: azzerato (il file Kernal di 2 byte scrive $0000 in $0801)
+code  $081F-$0821
+label $081F runtime_entry
+comment $081F Probabile destinazione dell'originale SYS 2079
+
+words $0822-$08E7 code
+label $0822 op_table
+comment $0822 Tabella di dispatch opcode P-code $0E..$70 (indice = $0806 + 2*op)
+
+bytes $08E8-$08EB
+label $08E8 pow10_hi
+comment $08E8 Potenze di 10 (10000,1000,100,10) per la stampa di interi: byte alti...
+bytes $08EC-$08EF
+label $08EC pow10_lo
+comment $08EC ...e byte bassi
+bytes $08F0-$08F4
+label $08F0 fop_lo
+comment $08F0 Operatori FP (opcode 7..11 = + - * / ^): byte bassi (indice $08E9+op)
+bytes $08F5-$08F9
+label $08F5 fop_hi
+comment $08F5 ... byte alti (indice $08EE+op) -> FADD $B86A, FSUB $B853, FMULT $BA2B, FDIV $BB12, FPWR $BF7B
+
+# --- header del programma compilato --------------------------------------------
+bytes $1784-$179E 2
+label $1784 hdr_vartab
+comment $1784 HEADER: $1784 VARTAB, $1786 ARYTAB, $1788 STREND, $178A PC di restart,
+comment $1784         $178C DATPTR iniziale, $178E PC iniziale del P-code
+label $1786 hdr_arytab
+label $1788 hdr_strend
+label $178A hdr_restart_pc
+label $178C hdr_datptr
+label $178E hdr_start_pc
+label $1790 pcode_restart
+
+bytes $179F-$1AC3
+label $179F data_area
+comment $179F Area DATA
+
+bytes $1AC4-$7DAC
+label $1AC4 pcode_start
+comment $1AC4 Inizio del P-code (PC iniziale)
+
+bytes $7DAD-$80F4
+label $7DAD vars_area
+comment $7DAD Area variabili (valori iniziali salvati con il programma)
+
+# --- punti d'ingresso ---------------------------------------------------------
+entry $0B41
+label $0B41 start
+comment $0B41 Punto d'ingresso: il boot fa JMP ($0351) e il vettore nell'ultimo header vale $0B41
+
+# --- VM -------------------------------------------------------------------------
+label $0CCD vm_fetch
+comment $0CCD Ciclo principale della VM: legge l'opcode da ($39)
+label $0CBE vm_next
+comment $0CBE Avanza il PC di 1 e passa al prossimo opcode
+label $0CC4 vm_skip_a
+comment $0CC4 Avanza il PC di A byte
+label $0D1C vm_var
+comment $0D1C Opcode >= $80: riferimento a variabile
+label $0B96 init_stack
+label $0B60 do_clr
+label $1579 vm_jump
+comment $1579 Imposta PC del P-code = A/X (lo/hi) e continua
+
+label $0C85 op_00_basic
+comment $0C85 Opcode $00: passa all'interprete BASIC della ROM dal PC corrente (usato solo come terminatore)
+label $0C96 vm_resume_txtptr
+comment $0C96 Riprende la VM dal TXTPTR ($7A/$7B) dopo una chiamata ROM che consuma testo
+label $0C9E vm_stmt_end
+comment $0C9E Fine istruzione: se abilitato (bit6 di $11) controlla RUN/STOP, poi prosegue
+label $0A26 vm_binop
+comment $0A26 Esecuzione operatori binari: Y=op. 1..6 confronto, 7..11 aritmetica, 12/13 AND/OR
+label $09C4 vm_str_binop
+comment $09C4 Operatori su stringhe: confronto (op<7) o concatenazione (op 7)
+label $0D16 vm_store
+comment $0D16 $E6: assegnazione esplicita
+label $0F4C var_load
+comment $0F4C Carica il valore della variabile puntata da $47/$48 (tipo dai byte del nome)
+label $0E37 special_var
+comment $0E37 Variabili speciali: PI, ST, TI, TI$
+label $0E63 load_int
+comment $0E63 Accumulatore intero ($64/$65) = X/A, tipo = intero ($0E=$80)
+label $0E6F arr_ref
+comment $0E6F Riferimento ad array: indici dallo stack, controllo limiti (BAD SUBSCRIPT)
+label $1085 int_to_float
+label $101B float_to_int
+label $0FEB pop_operand
+comment $0FEB Recupera dallo stack l'operando precedente e richiama il chiamante via ($55)
+label $1071 get_int_arg
+comment $1071 Argomento intero 0..255 in X (ILLEGAL QUANTITY altrimenti)
+label $105B get_int16_arg
+label $1497 find_for_frame
+comment $1497 Cerca sullo stack il record FOR della variabile ($49/$4A)
+label $0C72 int_negate
+label $0AFA int_abs
+label $0B13 int_compare
+label $08FA int_to_str
+label $0BB4 str_to_temp
+
+# --- gestori degli opcode (tabella op_table) -----------------------------------
+label $0966 op_0E_neg
+label $0976 op_0F_not
+label $163B op_10_dim
+comment $163B DIM: [ndim][nome 2 byte][slot hi][slot lo], dimensioni dallo stack
+label $1424 op_11_for
+comment $1424 FOR senza STEP (STEP 1)
+label $1417 op_12_for_step
+label $14C0 op_13_next
+label $14C3 op_14_next_var
+label $0B32 op_15_clr
+comment $0B32 CLR/inizio programma: azzera variabili ed esegue il P-code di init a $1790 (DIM)
+label $0B55 op_16_init_ret
+comment $0B55 Fine del P-code di init: torna al PC salvato in $50/$51
+label $11EE op_17_poke_wait
+comment $11EE POKE (op $17) e WAIT (op $4C/$4D)
+label $1215 op_18_sys
+label $1566 op_1A_gosub
+comment $1566 GOSUB [hi][lo]: spinge indirizzo di ritorno + marcatore $8D
+label $1573 op_19_goto
+comment $1573 GOTO [hi][lo] (indirizzo assoluto big-endian)
+label $1548 op_1B_on
+comment $1548 ON..GOTO ($1B) / ON..GOSUB ($1C): [lunghezza][hi lo]...
+label $1580 op_1D_return
+label $0B4F op_1E_restore
+label $15A9 op_1F_if_not
+comment $15A9 IF: se la condizione e' falsa salta avanti di [byte1] dal codice operativo
+label $10FF op_20_sgn
+label $10EE op_21_int
+label $10DC op_22_abs
+label $10CD op_fn_rom
+comment $10CD Funzioni numeriche eseguite tramite la tabella funzioni della ROM BASIC
+label $1126 op_25_pos
+label $111E op_2E_peek
+label $112D op_2F_len
+label $1133 op_30_str
+label $10C1 op_32_asc
+label $1147 op_33_chr
+label $11C2 op_34_left_right
+label $11BA op_36_mid
+label $15C2 op_37_def_fn
+comment $15C2 DEF FN: [var FN 2][var arg 2][lunghezza da saltare]
+label $15F5 op_38_fn
+label $1590 op_39_fn_end
+label $12AB op_3B_print_comma
+label $126A op_print_value
+comment $126A PRINT di un valore: $3C ';'  $3D ','  $3E a capo  $43 PRINT# + a capo
+label $12D9 op_3F_print_cr
+label $12BB op_40_spc_tab
+comment $12BB SPC( ($40) / TAB( ($41)
+label $12EA op_42_chkout
+label $12E2 op_45_clrchn
+label $1162 op_get
+comment $1162 GET ($46/$47): legge un tasto con GETIN e lo assegna
+label $1157 op_48_chkin
+label $0CAB op_49_stop
+label $122B op_read
+comment $122B READ: $4A stringa, $4B numero (OUT OF DATA = errore 13)
+label $0CAE op_4E_new
+label $0CB1 op_4F_end
+label $131A op_50_input_start
+label $1355 op_input_a
+label $1325 op_input_b
+label $13D0 op_54_cia_io
+comment $13D0 Opcode $54: scrive/legge CIA2 ($DD00/$DD03) - INPUT speciale o controllo hardware? Non usato dal gioco
+label $1305 op_59_flag
+comment $1305 Opcode $59-$5C: impostano/azzerano bit del flag $11 (controllo STOP, modo INPUT)
+label $130E op_5A_flag
+label $1308 op_5B_flag
+label $1311 op_5C_flag
+label $16D9 op_5D_load
+label $16DE op_5E_save
+label $16DA op_5F_verify
+label $1746 op_60_open
+label $12FA op_61_close
+label $177B op_bad
+comment $177B Opcode non validi: SYNTAX ERROR

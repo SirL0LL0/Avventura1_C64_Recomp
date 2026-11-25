@@ -1,0 +1,9 @@
+# Dati originali: forniti dall'utente, MAI nel repository
+originali/
+build/
+*.tap
+*.prg
+*.d64
+*.t64
+*.bin
+__pycache__/
