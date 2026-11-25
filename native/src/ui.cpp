@@ -191,8 +191,11 @@ bool Ui::option(const std::string& label, const std::string& value, float x, flo
     if (focused && key_ == SDLK_LEFT) { act = true; optDir_ = -1; }
     fill(x, y, w, h, focused ? Color{70, 52, 120} : Color{36, 28, 66});
     frame(x, y, w, h, focused ? pal::gold : pal::panelEdge, 2);
-    text(x + 20, y + 14, label, 3, pal::parchment, LEFT);
     std::string v = "< " + value + " >";
+    float vw = textWidth(v, 3);
+    float sc = 3;                                            // l'etichetta si adatta allo spazio a sinistra del valore
+    while (sc > 1.5f && textWidth(label, sc) > w - vw - 64) sc -= 0.25f;
+    text(x + 20, y + h / 2 - 4 * sc, label, sc, pal::parchment, LEFT);
     text(x + w - 20, y + 14, v, 3, focused ? pal::gold : pal::accent, RIGHT);
     return act;
 }

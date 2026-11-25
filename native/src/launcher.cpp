@@ -27,8 +27,12 @@ static void footer(App& a) {
     u.fill(0, Ui::H - 44, Ui::W, 44, Color{6, 4, 14, 200});
     std::string h = u.hoverHint();
     if (h.empty()) h = "Frecce/mouse per scegliere - Invio per confermare - Esc per tornare";
-    u.text(24, Ui::H - 30, h, 2, pal::dim, LEFT, false);
-    u.text(Ui::W - 24, Ui::H - 30, "Recomp v0.1", 2, pal::dim, RIGHT, false);
+    const std::string ver = "Recomp v0.1";
+    float avail = Ui::W - 48 - u.textWidth(ver, 2) - 32;      // spazio libero a sinistra della versione
+    float sc = 2;
+    while (sc > 1 && u.textWidth(h, sc) > avail) sc -= 0.125f;
+    u.text(24, Ui::H - 22 - 4 * sc, h, sc, pal::dim, LEFT, false);
+    u.text(Ui::W - 24, Ui::H - 30, ver, 2, pal::dim, RIGHT, false);
 }
 
 static void mainMenu(App& a) {
@@ -66,7 +70,7 @@ static void optionsMenu(App& a) {
     if (u.option("Velocita'", SPEEDS[a.cfg.speed].name, x, y, w)) a.cfg.speed = (a.cfg.speed + u.optionDir() + SPEED_COUNT) % SPEED_COUNT;
     if (u.option("Effetto CRT", a.cfg.crt ? "SI" : "NO", x, y + g, w)) a.cfg.crt = !a.cfg.crt;
     if (u.option("Schermo intero", a.cfg.fullscreen ? "SI" : "NO", x, y + g * 2, w)) { a.cfg.fullscreen = !a.cfg.fullscreen; a.applyVideo(); }
-    if (u.option("Scala intera (pixel perfetti)", a.cfg.integerScale ? "SI" : "NO", x, y + g * 3, w)) { a.cfg.integerScale = !a.cfg.integerScale; a.applyVideo(); }
+    if (u.option("Scala intera", a.cfg.integerScale ? "SI" : "NO", x, y + g * 3, w)) { a.cfg.integerScale = !a.cfg.integerScale; a.applyVideo(); }
     if (u.option("Suggerimenti tasti", a.cfg.hints ? "SI" : "NO", x, y + g * 4, w)) a.cfg.hints = !a.cfg.hints;
     u.text(px + pw / 2, y + g * 5 + 10, "Originale = tempi simili al C64 vero", 2, pal::dim, CENTER, false);
     if (u.button("INDIETRO", px + pw / 2 - 160, py + 430, 320, 56) || u.backPressed()) {
