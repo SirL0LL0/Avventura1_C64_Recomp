@@ -22,14 +22,36 @@ std::string rowText(const Screen& s, int y) {
 // una cella "si vede" se contiene un carattere o e' colorata in inverso (barre, cornici)
 bool reversed(const Screen& s, int x, int y) { return s.chars[y * Screen::W + x] & 0x80; }
 bool visible(const Screen& s, int x, int y) { return reversed(s, x, y) || (s.chars[y * Screen::W + x] & 0x7F) != 0x20; }
-bool blank(const Screen& s, int y) { for (int x = 0; x < Screen::W; x++) if (visible(s, x, y)) return false; return true; }
-int lastCol(const Screen& s, int y) { for (int x = Screen::W - 1; x >= 0; x--) if (visible(s, x, y)) return x; return -1; }
-int firstCol(const Screen& s, int y) { for (int x = 0; x < Screen::W; x++) if (visible(s, x, y)) return x; return 0; }
-// estende [x0,x1] su eventuali celle in inverso adiacenti (la barra colorata intera)
-void growReverse(const Screen& s, int y, int& x0, int& x1) {
-    while (x0 > 0 && reversed(s, x0 - 1, y)) x0--;
-    while (x1 < Screen::W - 1 && reversed(s, x1 + 1, y)) x1++;
+// Un "segmento" e' un gruppo di celle visibili separato dal resto da almeno 3 celle vuote:
+// cosi' la scelta non si allarga a disegni vicini (es. le torri del castello nel menu).
+// Dopo uno spazio, un blocco in inverso che segue testo normale e' un altro disegno: ci si ferma.
+int segEnd(const Screen& s, int y, int x) {
+    int last = x, gap = 0;
+    for (int i = x; i < Screen::W; i++) {
+        if (visible(s, i, y)) {
+            if (gap > 0 && reversed(s, i, y) && !reversed(s, last, y)) break;
+            last = i; gap = 0;
+        } else if (++gap >= 3) break;
+    }
+    return last;
 }
+int segStart(const Screen& s, int y, int x) {
+    int first = x, gap = 0;
+    for (int i = x; i >= 0; i--) {
+        if (visible(s, i, y)) {
+            if (gap > 0 && reversed(s, i, y) && !reversed(s, first, y)) break;
+            first = i; gap = 0;
+        } else if (++gap >= 3) break;
+    }
+    return first;
+}
+// prima cella visibile nell'intervallo [x0,x1], o -1
+int firstIn(const Screen& s, int y, int x0, int x1) {
+    for (int x = x0; x <= x1 && x < Screen::W; x++) if (visible(s, x, y)) return x;
+    return -1;
+}
+// estende x0 verso sinistra sulla barra in inverso contigua (es. "{rvon} * 1 *")
+int growLeft(const Screen& s, int y, int x0) { while (x0 > 0 && reversed(s, x0 - 1, y)) x0--; return x0; }
 
 // cerca "* c *" con spazi facoltativi; ritorna la colonna del primo '*' e il carattere
 bool starItem(const std::string& t, int& col, char& key) {
@@ -63,19 +85,18 @@ std::vector<Choice> detectChoices(const Screen& s) {
         int col; char key;
         if (starItem(t, col, key)) {
             // include la barra in inverso che precede l'asterisco (es. "{rvon} * 1 *")
-            int x0 = col, x1 = lastCol(s, y);
-            growReverse(s, y, x0, x1);
+            int x0 = growLeft(s, y, col), x1 = segEnd(s, y, col);
             Choice c{x0, y, x1, y, petsciiKey(key)};
-            // la descrizione puo' continuare sulle righe seguenti fino a una riga vuota
+            // la descrizione puo' continuare sulle righe seguenti, nelle stesse colonne,
+            // finche' non trova una riga vuota in quella zona
             for (int yy = y + 1; yy < Screen::H; yy++) {
                 const std::string& n = rows[yy];
                 int dc; char dk;
-                if (blank(s, yy) || starItem(n, dc, dk) || n.find("batti") != std::string::npos ||
+                int a0 = firstIn(s, yy, c.x0, c.x1);
+                if (a0 < 0 || starItem(n, dc, dk) || n.find("batti") != std::string::npos ||
                     n.find("premi un tasto") != std::string::npos || n.find("- - -") != std::string::npos) break;
                 c.y1 = yy;
-                int a0 = firstCol(s, yy), a1 = lastCol(s, yy);
-                growReverse(s, yy, a0, a1);
-                if (a0 < c.x0) c.x0 = a0;
+                int a1 = segEnd(s, yy, a0);
                 if (a1 > c.x1) c.x1 = a1;
             }
             out.push_back(c);
@@ -110,10 +131,8 @@ std::vector<Choice> detectChoices(const Screen& s) {
         }
         if (pk != std::string::npos) {
             size_t en = t.find(';', pk);
-            int st = firstCol(s, y);
-            int e = en == std::string::npos ? (int)(pk + 13) : (int)en - 1;
-            if (en == std::string::npos) growReverse(s, y, st, e);     // tutta la barra colorata
-            else { int dummy = e; growReverse(s, y, st, dummy); }
+            int st = segStart(s, y, (int)pk);
+            int e = en == std::string::npos ? segEnd(s, y, (int)pk) : (int)en - 1;   // tutta la barra colorata
             out.push_back({st, y, e, y, 0x20});
         }
     }
