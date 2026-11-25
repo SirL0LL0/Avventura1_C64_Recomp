@@ -1,4 +1,5 @@
 // Test senza finestra della VM: vmtest <gioco.tap> [tasti...]  (tasti: caratteri, SPACE, ENTER, F1)
+#include "choices.h"
 #include "tap.h"
 #include "vm.h"
 #include <cstdio>
@@ -48,6 +49,8 @@ int main(int argc, char** argv) {
         }
         std::printf("%s|\n", s.c_str());
     }
-    std::printf("err=%s pc=%04X\n", vm.errorText().c_str(), vm.currentPC());
+    std::printf("err=%s pc=%04X attesa_tasto=%d\n", vm.errorText().c_str(), vm.currentPC(), (int)vm.waitingKey());
+    for (const Choice& c : detectChoices(scr))
+        std::printf("scelta tasto=$%02X %s celle (%d,%d)-(%d,%d)\n", c.key, c.pad ? "[tastierino]" : "", c.x0, c.y0, c.x1, c.y1);
     return 0;
 }

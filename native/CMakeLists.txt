@@ -16,6 +16,7 @@ add_executable(avventura1 WIN32
   src/screen.cpp
   src/ui.cpp
   src/launcher.cpp
+  src/choices.cpp
 )
 target_include_directories(avventura1 PRIVATE src)
 target_link_libraries(avventura1 PRIVATE SDL3::SDL3-static)
@@ -25,7 +26,7 @@ endif()
 endif()
 
 # test senza finestra: esegue la VM e stampa lo schermo come testo
-add_executable(vmtest src/vmtest.cpp src/tap.cpp src/vm.cpp src/screen.cpp)
+add_executable(vmtest src/vmtest.cpp src/tap.cpp src/vm.cpp src/screen.cpp src/choices.cpp)
 target_include_directories(vmtest PRIVATE src)
 if(MINGW)
   target_link_options(vmtest PRIVATE -static -static-libgcc -static-libstdc++)

@@ -1,5 +1,6 @@
 // Stato condiviso dell'applicazione (launcher + gioco).
 #pragma once
+#include "choices.h"
 #include "screen.h"
 #include "tap.h"
 #include "ui.h"
@@ -74,6 +75,15 @@ struct App {
     std::string toast;
     double toastUntil = 0;
     double budgetCarry = 0;
+
+    // scelte cliccabili riconosciute sullo schermo del gioco
+    std::vector<Choice> choices;
+    int hoverChoice = -1;        // sotto il mouse
+    int selChoice = -1;          // selezionata da tastiera (frecce)
+    float gmx = -1, gmy = -1;    // mouse in coordinate logiche
+    SDL_Cursor* cursorHand = nullptr;
+    SDL_Cursor* cursorArrow = nullptr;
+    bool handShown = false;
 
     // salvataggi
     std::vector<SaveInfo> saves;

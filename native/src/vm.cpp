@@ -550,6 +550,7 @@ void VM::step() {
             if (in_) { if (in_->pos < in_->buf.size()) ch = in_->buf.substr(in_->pos++, 1); }
             else if (!keys_.empty()) { ch = std::string(1, (char)keys_.front()); keys_.pop_front(); }
             else cost_ += 1.5;                   // attesa tasto
+            if (!in_) waitKey_ = ch.empty();
             bool isS = e.r.kind == 1 ? isStrVar(e.r.idx) : arrays_.at(e.r.idx).isStr;
             if (isS) assign(e.r, Value::str(ch));
             else assign(e.r, Value::num(!ch.empty() && ch[0] >= '0' && ch[0] <= '9' ? ch[0] - '0' : 0));

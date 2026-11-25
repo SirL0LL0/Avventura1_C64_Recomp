@@ -137,6 +137,8 @@ void App::stopGame() {
     vm.reset();
     c64.reset();
     SDL_StopTextInput(win);
+    choices.clear();
+    if (handShown) { SDL_SetCursor(cursorArrow); handShown = false; }
     screen = Screen_::MAIN;
     ui.resetFocus();
 }
@@ -216,6 +218,40 @@ static void gameKey(App& a, SDL_Keycode k, SDL_Keymod mod) {
     a.vm->pushKey((uint8_t)pet);
 }
 
+// ------------------------------------------------------------------ scelte cliccabili
+// cella C64 -> coordinate logiche (bordo 32x36 pixel, scala 3)
+static SDL_FRect choiceRect(const Choice& c) {
+    if (c.pad) {
+        const float bw = 72, gap = 12, total = 9 * bw + 8 * gap;
+        return SDL_FRect{(Ui::W - total) / 2 + c.x0 * (bw + gap), 712, bw, 56};
+    }
+    const float s = 3, cw = 8 * s;
+    return SDL_FRect{(Screen::BORDER_X * s) + c.x0 * cw, (Screen::BORDER_Y * s) + c.y0 * cw,
+                     (c.x1 - c.x0 + 1) * cw, (c.y1 - c.y0 + 1) * cw};
+}
+
+// gestione mouse/tastiera delle scelte; ritorna true se l'evento e' stato usato
+static bool choiceEvent(App& a, const SDL_Event& e) {
+    if (e.type == SDL_EVENT_MOUSE_MOTION) { a.gmx = e.motion.x; a.gmy = e.motion.y; a.selChoice = -1; return true; }
+    if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
+        a.gmx = e.button.x; a.gmy = e.button.y;
+        for (const Choice& c : a.choices) {
+            SDL_FRect rc = choiceRect(c);
+            if (a.gmx >= rc.x && a.gmx < rc.x + rc.w && a.gmy >= rc.y && a.gmy < rc.y + rc.h) { a.vm->pushKey(c.key); a.choices.clear(); return true; }
+        }
+        return true;
+    }
+    if (e.type == SDL_EVENT_KEY_DOWN && !a.choices.empty()) {
+        int n = (int)a.choices.size();
+        if (e.key.key == SDLK_DOWN || e.key.key == SDLK_TAB) { a.selChoice = (a.selChoice + 1) % n; return true; }
+        if (e.key.key == SDLK_UP) { a.selChoice = a.selChoice <= 0 ? n - 1 : a.selChoice - 1; return true; }
+        if ((e.key.key == SDLK_RETURN || e.key.key == SDLK_KP_ENTER) && a.selChoice >= 0) {
+            a.vm->pushKey(a.choices[a.selChoice].key); a.selChoice = -1; a.choices.clear(); return true;
+        }
+    }
+    return false;
+}
+
 // ------------------------------------------------------------------ disegno partita
 static void drawGame(App& a, double dt) {
     Ui& u = a.ui;
@@ -243,10 +279,44 @@ static void drawGame(App& a, double dt) {
         for (int y = 2; y < Ui::H; y += 3) u.fill(0, (float)y, Ui::W, 1, Color{0, 0, 0, 80});
         u.frame(0, 0, Ui::W, Ui::H, Color{0, 0, 0, 90}, 10);
     }
+    // scelte cliccabili: riconosciute solo mentre il gioco aspetta un tasto
+    if (a.vm && a.vm->waitingKey() && !a.paused && !a.tapePick && !a.lineInput) a.choices = detectChoices(*a.c64);
+    else a.choices.clear();
+    if (a.selChoice >= (int)a.choices.size()) a.selChoice = -1;
+    a.hoverChoice = -1;
+    for (size_t i = 0; i < a.choices.size(); i++) {
+        SDL_FRect rc = choiceRect(a.choices[i]);
+        if (a.gmx >= rc.x && a.gmx < rc.x + rc.w && a.gmy >= rc.y && a.gmy < rc.y + rc.h) a.hoverChoice = (int)i;
+    }
+    for (size_t i = 0; i < a.choices.size(); i++) {
+        const Choice& c = a.choices[i];
+        SDL_FRect rc = choiceRect(c);
+        bool on = (int)i == a.hoverChoice || (int)i == a.selChoice;
+        if (c.pad) {
+            u.fill(rc.x + 3, rc.y + 3, rc.w, rc.h, Color{0, 0, 0, 120});
+            u.fill(rc.x, rc.y, rc.w, rc.h, on ? Color{92, 62, 150} : Color{44, 34, 82});
+            u.frame(rc.x, rc.y, rc.w, rc.h, on ? pal::gold : pal::panelEdge, 2);
+            u.text(rc.x + rc.w / 2, rc.y + rc.h / 2 - 12, std::string(1, (char)c.key), 3, on ? pal::white : pal::parchment, CENTER);
+            continue;
+        }
+        float pulse = 0.5f + 0.5f * (float)std::sin(a.time * 5.0);
+        if (on) {
+            u.fill(rc.x - 4, rc.y - 4, rc.w + 8, rc.h + 8, Color{246, 200, 92, (uint8_t)(40 + 30 * pulse)});
+            u.frame(rc.x - 6, rc.y - 6, rc.w + 12, rc.h + 12, pal::gold, 3);
+        } else {
+            u.frame(rc.x - 4, rc.y - 4, rc.w + 8, rc.h + 8, Color{246, 200, 92, 70}, 1);
+        }
+    }
+    bool wantHand = a.hoverChoice >= 0;
+    if (wantHand != a.handShown) { SDL_SetCursor(wantHand ? a.cursorHand : a.cursorArrow); a.handShown = wantHand; }
     if (a.cfg.hints && !a.paused) {
         u.fill(0, Ui::H - 34, Ui::W, 34, Color{0, 0, 0, 120});
-        u.text(16, Ui::H - 25, "Tasti numerici per scegliere - F1 bevi il filtro - Esc menu", 2, Color{230, 230, 240, 220}, LEFT, false);
-        u.text(Ui::W - 16, Ui::H - 25, SPEEDS[a.cfg.speed].name, 2, pal::gold, RIGHT, false);
+        const std::string hint = "Clic o tasti per scegliere - Frecce+Invio - F1 bevi - Esc menu";
+        const char* sp = SPEEDS[a.cfg.speed].name;
+        float avail = Ui::W - 32 - u.textWidth(sp, 2) - 24, sc = 2;
+        while (sc > 1 && u.textWidth(hint, sc) > avail) sc -= 0.125f;
+        u.text(16, Ui::H - 17 - 4 * sc, hint, sc, Color{230, 230, 240, 220}, LEFT, false);
+        u.text(Ui::W - 16, Ui::H - 25, sp, 2, pal::gold, RIGHT, false);
     }
     if (a.time < a.toastUntil) {
         float w = u.textWidth(a.toast, 2.5f) + 60;
@@ -396,6 +466,8 @@ int main(int argc, char** argv) {
     a.c64tex = SDL_CreateTexture(a.ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, Screen::PIX_W, Screen::PIX_H);
     SDL_SetTextureScaleMode(a.c64tex, SDL_SCALEMODE_NEAREST);
     a.ui.init(a.ren);
+    a.cursorHand = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER);
+    a.cursorArrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
     a.applyVideo();
     a.haveGame = a.loadCachedGame();
     if (!tapArg.empty()) a.tryLoadTap(tapArg);
@@ -412,6 +484,7 @@ int main(int argc, char** argv) {
             if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_F11) { a.cfg.fullscreen = !a.cfg.fullscreen; a.applyVideo(); a.saveConfig(); continue; }
             if (inGame) {
                 if (e.type == SDL_EVENT_KEY_DOWN && e.key.key == SDLK_ESCAPE) { a.paused = true; a.ui.resetFocus(); continue; }
+                if (choiceEvent(a, e)) continue;
                 if (e.type == SDL_EVENT_TEXT_INPUT) gameText(a, e.text.text);
                 if (e.type == SDL_EVENT_KEY_DOWN) gameKey(a, e.key.key, e.key.mod);
                 continue;
@@ -440,8 +513,20 @@ int main(int argc, char** argv) {
             if (frame == 50) { saveShot(a, shotDir + "/2b_info.bmp"); a.screen = Screen_::SAVES; a.refreshSaves(); }
             if (frame == 60) { saveShot(a, shotDir + "/2c_salvataggi.bmp"); a.screen = Screen_::MAIN; if (a.haveGame) a.startGame(); }
             if (frame == 300 && a.vm) a.vm->pushKey(' ');
+            if (frame == 410 && !a.choices.empty()) {           // mouse sulla seconda scelta
+                SDL_FRect rc = choiceRect(a.choices[a.choices.size() > 1 ? 1 : 0]);
+                a.gmx = rc.x + rc.w / 2; a.gmy = rc.y + rc.h / 2;
+            }
             if (frame == 420) saveShot(a, shotDir + "/3_titolo.bmp");
-            if (frame == 430 && a.vm) a.vm->pushKey(' ');
+            if (frame == 430 && a.vm) {                           // clic simulato sulla scelta evidenziata
+                SDL_Event ev{}; ev.type = SDL_EVENT_MOUSE_BUTTON_DOWN; ev.button.button = SDL_BUTTON_LEFT;
+                ev.button.x = a.gmx; ev.button.y = a.gmy;
+                if (!choiceEvent(a, ev) || a.choices.size()) a.vm->pushKey(' ');
+            }
+            if (frame == 550 && !a.choices.empty()) {
+                SDL_FRect rc = choiceRect(a.choices[0]);
+                a.gmx = rc.x + rc.w / 2; a.gmy = rc.y + rc.h / 2;
+            }
             if (frame == 560) saveShot(a, shotDir + "/4_gioco.bmp");
             if (frame == 570) { a.paused = true; }
             if (frame == 580) { saveShot(a, shotDir + "/5_pausa.bmp"); a.running = false; }

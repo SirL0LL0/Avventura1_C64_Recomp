@@ -39,6 +39,8 @@ public:
     void tapeProvide(bool ok, const std::string& name, const std::string& data);
     void lineProvide(const std::string& line);
     std::string errorText() const { return err_; }
+    // vero se l'ultimo GET non ha trovato tasti: il gioco sta aspettando una scelta
+    bool waitingKey() const { return st_ == RUN && waitKey_ && keys_.empty(); }
     int currentPC() const { return pc_; }
     static std::string fmtNumber(double v);
     static double val(const std::string& s);
@@ -68,6 +70,7 @@ private:
     std::map<int, uint8_t> pokes_;
     std::string err_;
     double cost_ = 0;
+    bool waitKey_ = false;
     uint64_t startMs_ = 0;
     std::vector<Ref> pendingInput_;     // INPUT da tastiera in attesa
 
