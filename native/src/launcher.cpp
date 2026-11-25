@@ -20,6 +20,7 @@ static void title(App& a, float y) {
     u.text(Ui::W / 2, y + wob, "AVVENTURA 1", 10, Color{110, 62, 10}, CENTER, false);
     u.text(Ui::W / 2 - 4, y - 4 + wob, "AVVENTURA 1", 10, pal::gold, CENTER, true);
     u.text(Ui::W / 2, y + 96, "~ F A N T A S Y ~", 3, pal::parchment, CENTER);
+    u.text(Ui::W / 2, y + 136, "di A. Castellari", 2.5f, pal::gold, CENTER);
 }
 
 static void footer(App& a) {
