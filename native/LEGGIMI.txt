@@ -1,0 +1,54 @@
+AVVENTURA 1 (FANTASY) - RECOMP  -  versione 0.1.0 beta
+=====================================================
+
+Il gioco per Commodore 64 di A. Castellari, ricostruito per PC Windows.
+Il programma originale (un BASIC compilato) viene eseguito da una nuova
+macchina virtuale, senza emulare il C64.
+
+
+COSA SERVE
+----------
+- Windows 10 o 11 a 64 bit
+- la TUA copia originale del gioco su nastro, in formato .tap
+  (questo pacchetto NON contiene alcun dato del gioco)
+
+
+COME SI GIOCA
+-------------
+1. Estrai la cartella dove vuoi (anche su una chiavetta USB).
+2. Avvia avventura1.exe.
+3. Clicca "FORNISCI COPIA (.TAP)" e scegli il file .tap,
+   oppure trascina il file .tap sulla finestra.
+4. Clicca "GIOCA".
+
+Le scelte del gioco si cliccano col mouse; si illuminano al passaggio.
+Si puo' usare anche la tastiera:
+  numeri / lettere ..... scelte dirette
+  frecce su/giu + Invio  scegli la voce evidenziata
+  F1 ................... bevi il Filtro magico (quando il gioco lo propone)
+  Esc .................. pausa (velocita', effetto CRT, ricomincia, menu)
+  F11 .................. schermo intero
+
+
+SALVATAGGI E DATI (VERSIONE PORTABLE)
+-------------------------------------
+Tutto viene scritto nella cartella "dati" accanto a avventura1.exe:
+  dati\config.ini ...... opzioni
+  dati\gioco.bin ....... dati ricavati dalla tua copia .tap
+  dati\saves\ .......... avventure salvate sul "nastro virtuale"
+Per spostare il gioco con i salvataggi basta copiare la cartella.
+Non distribuire la cartella "dati": contiene dati del gioco originale.
+
+
+NOTE SULLA BETA
+---------------
+- Il riconoscimento delle scelte cliccabili e' nuovo: se una scelta non si
+  evidenzia o si evidenzia male, usa la tastiera e segnala la schermata.
+- La velocita' "Originale" imita i tempi del C64; "Veloce" e "Turbo"
+  accorciano le attese.
+- Il font e la grafica del launcher sono originali del progetto, non sono
+  la ROM dei caratteri Commodore.
+
+
+Avventura 1 e' un'opera di A. Castellari; i diritti del gioco restano ai
+rispettivi titolari. Questo progetto contiene solo strumenti e codice nuovi.

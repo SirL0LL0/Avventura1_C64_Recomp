@@ -28,7 +28,7 @@ static void footer(App& a) {
     u.fill(0, Ui::H - 44, Ui::W, 44, Color{6, 4, 14, 200});
     std::string h = u.hoverHint();
     if (h.empty()) h = "Frecce/mouse per scegliere - Invio per confermare - Esc per tornare";
-    const std::string ver = "Recomp v0.1";
+    const std::string ver = "Recomp v" APP_VERSION;
     float avail = Ui::W - 48 - u.textWidth(ver, 2) - 32;      // spazio libero a sinistra della versione
     float sc = 2;
     while (sc > 1 && u.textWidth(h, sc) > avail) sc -= 0.125f;
