@@ -39,8 +39,8 @@ static void footer(App& a) {
 static void mainMenu(App& a) {
     Ui& u = a.ui;
     title(a, 70);
-    float pw = 560, px = (Ui::W - pw) / 2, py = 250;
-    u.panel(px, py, pw, 470);
+    float pw = 560, px = (Ui::W - pw) / 2, py = 246;
+    u.panel(px, py, pw, 500);
     // stato della copia del gioco
     if (a.haveGame) {
         u.fill(px + 30, py + 28, 16, 16, pal::ok);
@@ -49,7 +49,7 @@ static void mainMenu(App& a) {
         u.fill(px + 30, py + 28, 16, 16, pal::danger);
         u.text(px + 58, py + 26, "Manca la copia del gioco", 2.5f, pal::danger, LEFT);
     }
-    float bx = px + 50, bw = pw - 100, by = py + 76, bh = 56, gap = 68;
+    float bx = px + 50, bw = pw - 100, by = py + 70, bh = 52, gap = 62;
     if (u.button("GIOCA", bx, by, bw, bh, a.haveGame, "Avvia l'avventura")) a.startGame();
     if (u.button(a.haveGame ? "CAMBIA COPIA (.TAP)" : "FORNISCI COPIA (.TAP)", bx, by + gap, bw, bh, true,
                  "Scegli il .tap originale (o trascinalo qui)"))
@@ -58,7 +58,11 @@ static void mainMenu(App& a) {
     if (u.button("OPZIONI", bx, by + gap * 3, bw, bh, true, "Velocita', schermo, effetto CRT")) { a.optionsReturn = Screen_::MAIN; a.screen = Screen_::OPTIONS; u.resetFocus(); }
     if (u.button("INFORMAZIONI", bx, by + gap * 4, bw, bh, true, "Crediti e note legali")) { a.screen = Screen_::ABOUT; u.resetFocus(); }
     if (u.button("ESCI", bx, by + gap * 5, bw, bh, true, "Chiudi il programma")) a.running = false;
-    if (!a.status.empty()) u.text(Ui::W / 2, py + 486, a.status, 2, a.statusError ? pal::danger : pal::ok, CENTER);
+    if (!a.status.empty()) {
+        float sc = 2;
+        while (sc > 1 && u.textWidth(a.status, sc) > pw - 60) sc -= 0.125f;
+        u.text(Ui::W / 2, py + 456, a.status, sc, a.statusError ? pal::danger : pal::ok, CENTER);
+    }
     if (u.backPressed()) a.running = false;
 }
 

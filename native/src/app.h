@@ -72,6 +72,7 @@ struct App {
     bool lineInput = false;
     std::string lineBuf;
     std::string endReason;       // fine partita in attesa di conferma
+    double endAt = -1;           // istante di fine partita (per ignorare tasti premuti un attimo prima)
     std::string toast;
     double toastUntil = 0;
     double budgetCarry = 0;

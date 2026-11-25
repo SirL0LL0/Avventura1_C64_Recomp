@@ -128,6 +128,7 @@ void App::startGame() {
     vm = std::make_unique<VM>(game.mem, *c64, host);
     paused = tapePick = lineInput = false;
     endReason.clear();
+    endAt = -1;
     budgetCarry = 0;
     screen = Screen_::GAME;
     SDL_StartTextInput(win);
@@ -261,12 +262,8 @@ static void drawGame(App& a, double dt) {
         double budget = UNITS_PER_SEC * mult * std::min(dt, 0.1);
         a.vm->run(budget);
     }
-    if (a.endReason == "end" || a.endReason == "reset" || a.endReason == "stop") {
-        a.stopGame();
-        a.status = "Partita terminata. Alla prossima avventura!";
-        a.statusError = false;
-        return;
-    }
+    const bool finished = a.endReason == "end" || a.endReason == "reset" || a.endReason == "stop";
+    if (finished && a.endAt < 0) a.endAt = a.time;
     // schermo C64
     void* px; int pitch;
     if (SDL_LockTexture(a.c64tex, nullptr, &px, &pitch)) {
@@ -280,7 +277,7 @@ static void drawGame(App& a, double dt) {
         u.frame(0, 0, Ui::W, Ui::H, Color{0, 0, 0, 90}, 10);
     }
     // scelte cliccabili: riconosciute solo mentre il gioco aspetta un tasto
-    if (a.vm && a.vm->waitingKey() && !a.paused && !a.tapePick && !a.lineInput) a.choices = detectChoices(*a.c64);
+    if (a.vm && a.vm->waitingKey() && !a.paused && !a.tapePick && !a.lineInput && a.endReason.empty()) a.choices = detectChoices(*a.c64);
     else a.choices.clear();
     if (a.selChoice >= (int)a.choices.size()) a.selChoice = -1;
     a.hoverChoice = -1;
@@ -309,6 +306,20 @@ static void drawGame(App& a, double dt) {
     }
     bool wantHand = a.hoverChoice >= 0;
     if (wantHand != a.handShown) { SDL_SetCursor(wantHand ? a.cursorHand : a.cursorArrow); a.handShown = wantHand; }
+    // fine partita: la schermata finale resta visibile finche' il giocatore non decide di uscire
+    if (finished) {
+        float pw = 760, ph = 120, px = (Ui::W - pw) / 2, py = Ui::H - ph - 24;
+        u.panel(px, py, pw, ph);
+        u.text(Ui::W / 2, py + 26, "FINE DELL'AVVENTURA", 3, pal::gold, CENTER);
+        float blink = 0.6f + 0.4f * (float)std::sin(a.time * 4.0);
+        u.text(Ui::W / 2, py + 72, "Clicca o premi un tasto per tornare al menu", 2, Color{238, 226, 196, (uint8_t)(255 * blink)}, CENTER, false);
+        if (a.time - a.endAt > 0.5 && u.anyInput()) {
+            a.stopGame();
+            a.status = "Partita terminata. Alla prossima avventura!";
+            a.statusError = false;
+        }
+        return;
+    }
     if (a.cfg.hints && !a.paused) {
         u.fill(0, Ui::H - 34, Ui::W, 34, Color{0, 0, 0, 120});
         const std::string hint = "Clic o tasti per scegliere - Frecce+Invio - F1 bevi - Esc menu";
@@ -529,7 +540,8 @@ int main(int argc, char** argv) {
             }
             if (frame == 560) saveShot(a, shotDir + "/4_gioco.bmp");
             if (frame == 570) { a.paused = true; }
-            if (frame == 580) { saveShot(a, shotDir + "/5_pausa.bmp"); a.running = false; }
+            if (frame == 580) { saveShot(a, shotDir + "/5_pausa.bmp"); a.paused = false; a.endReason = "reset"; }
+            if (frame == 600) { saveShot(a, shotDir + "/6_fine.bmp"); a.running = false; }
         }
         SDL_RenderPresent(a.ren);
     }

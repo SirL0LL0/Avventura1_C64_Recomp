@@ -40,6 +40,7 @@ public:
 
     bool keyPressed(SDL_Keycode k) const { return key_ == k; }
     bool backPressed() const { return key_ == SDLK_ESCAPE; }
+    bool anyInput() const { return click_ || key_ != 0; }
     void resetFocus() { focus_ = 0; }
 
 private:
