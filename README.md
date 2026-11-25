@@ -56,6 +56,28 @@ docs/
 
 Dettagli in [docs/PCODE.md](docs/PCODE.md).
 
+## Stato del lavoro
+
+| Parte | Stato |
+|-------|-------|
+| Estrazione TAP, disassemblato annotato del runtime | fatto, round-trip byte-identico |
+| Decompilatore P-code → BASIC (`node tools/avv.js decompile`) | fatto |
+| Ricompilatore BASIC → P-code/PRG (`node tools/avv.js compile`) | fatto, `verify` identico byte per byte |
+| Motore JS (interprete BASIC + schermo C64), test con `node tools/selftest.js` | funzionante, gioco giocabile senza interfaccia |
+| **App nativa** `native/` (C++17 + SDL3 statica): VM del P-code originale + schermo | VM fatta e testata con `vmtest` |
+| App nativa: launcher (opzioni, scelta copia originale, salvataggi), finestra di gioco | **da fare** (prossimo passo) |
+| Mod: nuovi opcode `$62-$70` per grafica, suoni, mouse; nuove missioni e oggetti | dopo |
+
+Build dell'app nativa (toolchain clang + SDL3 statica già presente sul PC):
+
+```powershell
+$env:PATH="C:\Users\lollo\.local\share\retcomm\toolchains\cmake-clang-v1\latest\bin;$env:PATH"
+node tools\gen_font.js
+cmake -S native -B build\native -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_PREFIX_PATH="C:\Users\lollo\.local\share\retcomm\toolchains\cmake-clang-v1\latest\deps"
+cmake --build build\native -j 8
+.\build\native\vmtest.exe "originali\avventura-1-(fantasy)-versione-commerciale.tap" SPACE 2 1
+```
+
 ## Note legali
 
 Il gioco è un'opera commerciale protetta da copyright. Questo progetto contiene solo strumenti
