@@ -137,8 +137,12 @@ static void aboutMenu(App& a) {
         "",
         "Font e grafica del launcher: originali del progetto.",
     };
+    // scala del testo calcolata sulla riga piu' lunga, cosi' resta dentro il riquadro
+    float widest = 0;
+    for (const char* l : lines) widest = std::fmax(widest, u.textWidth(l, 1));
+    float sc = std::fmin(2.5f, (pw - 80) / widest);
     float y = py + 36;
-    for (const char* l : lines) { u.text(px + 40, y, l, 2.5f, l[0] ? pal::parchment : pal::dim, LEFT, false); y += 30; }
+    for (const char* l : lines) { u.text(px + 40, y, l, sc, l[0] ? pal::parchment : pal::dim, LEFT, false); y += 12 * sc; }
     if (u.button("INDIETRO", px + pw / 2 - 160, py + 476, 320, 56) || u.backPressed()) { a.screen = Screen_::MAIN; u.resetFocus(); }
 }
 

@@ -399,7 +399,9 @@ int main(int argc, char** argv) {
         if (!shotDir.empty()) {                  // modalita' cattura schermate (test)
             frame++;
             if (frame == 30) { saveShot(a, shotDir + "/1_menu.bmp"); a.screen = Screen_::OPTIONS; }
-            if (frame == 40) { saveShot(a, shotDir + "/2_opzioni.bmp"); a.screen = Screen_::MAIN; if (a.haveGame) a.startGame(); }
+            if (frame == 40) { saveShot(a, shotDir + "/2_opzioni.bmp"); a.screen = Screen_::ABOUT; }
+            if (frame == 50) { saveShot(a, shotDir + "/2b_info.bmp"); a.screen = Screen_::SAVES; a.refreshSaves(); }
+            if (frame == 60) { saveShot(a, shotDir + "/2c_salvataggi.bmp"); a.screen = Screen_::MAIN; if (a.haveGame) a.startGame(); }
             if (frame == 300 && a.vm) a.vm->pushKey(' ');
             if (frame == 420) saveShot(a, shotDir + "/3_titolo.bmp");
             if (frame == 430 && a.vm) a.vm->pushKey(' ');

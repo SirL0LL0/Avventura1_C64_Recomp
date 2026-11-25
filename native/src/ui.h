@@ -9,7 +9,7 @@ struct Color { uint8_t r, g, b, a = 255; };
 namespace pal {
 const Color gold{246, 200, 92}, goldDark{150, 104, 30}, ink{18, 14, 34}, parchment{238, 226, 196},
     dim{150, 140, 170}, white{255, 255, 255}, accent{120, 196, 255}, danger{235, 105, 90}, ok{120, 220, 140},
-    panel{24, 20, 46, 230}, panelEdge{96, 78, 150};
+    panel{24, 20, 46, 252}, panelEdge{96, 78, 150};
 }
 
 enum Align { LEFT, CENTER, RIGHT };
