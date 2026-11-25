@@ -65,7 +65,7 @@ Dettagli in [docs/PCODE.md](docs/PCODE.md).
 | Ricompilatore BASIC → P-code/PRG (`node tools/avv.js compile`) | fatto, `verify` identico byte per byte |
 | Motore JS (interprete BASIC + schermo C64), test con `node tools/selftest.js` | funzionante, gioco giocabile senza interfaccia |
 | **App nativa** `native/` (C++17 + SDL3 statica): VM del P-code originale + schermo | VM fatta e testata con `vmtest` |
-| App nativa: launcher (opzioni, scelta copia originale, salvataggi), finestra di gioco | **da fare** (prossimo passo) |
+| App nativa: launcher (opzioni, scelta copia originale, salvataggi), finestra di gioco | fatto: `build\native\avventura1.exe` |
 | Mod: nuovi opcode `$62-$70` per grafica, suoni, mouse; nuove missioni e oggetti | dopo |
 
 Build dell'app nativa (toolchain clang + SDL3 statica già presente sul PC):

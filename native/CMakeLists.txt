@@ -16,7 +16,6 @@ add_executable(avventura1 WIN32
   src/screen.cpp
   src/ui.cpp
   src/launcher.cpp
-  src/app.rc
 )
 target_include_directories(avventura1 PRIVATE src)
 target_link_libraries(avventura1 PRIVATE SDL3::SDL3-static)
