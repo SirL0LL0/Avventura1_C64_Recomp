@@ -19,8 +19,17 @@ std::string rowText(const Screen& s, int y) {
     return t;
 }
 
-bool blank(const std::string& t) { return t.find_first_not_of(' ') == std::string::npos; }
-int lastCol(const std::string& t) { size_t p = t.find_last_not_of(' '); return p == std::string::npos ? -1 : (int)p; }
+// una cella "si vede" se contiene un carattere o e' colorata in inverso (barre, cornici)
+bool reversed(const Screen& s, int x, int y) { return s.chars[y * Screen::W + x] & 0x80; }
+bool visible(const Screen& s, int x, int y) { return reversed(s, x, y) || (s.chars[y * Screen::W + x] & 0x7F) != 0x20; }
+bool blank(const Screen& s, int y) { for (int x = 0; x < Screen::W; x++) if (visible(s, x, y)) return false; return true; }
+int lastCol(const Screen& s, int y) { for (int x = Screen::W - 1; x >= 0; x--) if (visible(s, x, y)) return x; return -1; }
+int firstCol(const Screen& s, int y) { for (int x = 0; x < Screen::W; x++) if (visible(s, x, y)) return x; return 0; }
+// estende [x0,x1] su eventuali celle in inverso adiacenti (la barra colorata intera)
+void growReverse(const Screen& s, int y, int& x0, int& x1) {
+    while (x0 > 0 && reversed(s, x0 - 1, y)) x0--;
+    while (x1 < Screen::W - 1 && reversed(s, x1 + 1, y)) x1++;
+}
 
 // cerca "* c *" con spazi facoltativi; ritorna la colonna del primo '*' e il carattere
 bool starItem(const std::string& t, int& col, char& key) {
@@ -54,17 +63,20 @@ std::vector<Choice> detectChoices(const Screen& s) {
         int col; char key;
         if (starItem(t, col, key)) {
             // include la barra in inverso che precede l'asterisco (es. "{rvon} * 1 *")
-            int x0 = col;
-            while (x0 > 0 && (s.chars[y * Screen::W + x0 - 1] & 0x80)) x0--;
-            Choice c{x0, y, lastCol(t), y, petsciiKey(key)};
+            int x0 = col, x1 = lastCol(s, y);
+            growReverse(s, y, x0, x1);
+            Choice c{x0, y, x1, y, petsciiKey(key)};
             // la descrizione puo' continuare sulle righe seguenti fino a una riga vuota
             for (int yy = y + 1; yy < Screen::H; yy++) {
                 const std::string& n = rows[yy];
                 int dc; char dk;
-                if (blank(n) || starItem(n, dc, dk) || n.find("batti") != std::string::npos ||
+                if (blank(s, yy) || starItem(n, dc, dk) || n.find("batti") != std::string::npos ||
                     n.find("premi un tasto") != std::string::npos || n.find("- - -") != std::string::npos) break;
                 c.y1 = yy;
-                if (lastCol(n) > c.x1) c.x1 = lastCol(n);
+                int a0 = firstCol(s, yy), a1 = lastCol(s, yy);
+                growReverse(s, yy, a0, a1);
+                if (a0 < c.x0) c.x0 = a0;
+                if (a1 > c.x1) c.x1 = a1;
             }
             out.push_back(c);
             continue;
@@ -97,10 +109,12 @@ std::vector<Choice> detectChoices(const Screen& s) {
             out.push_back({(int)st, y, (int)f1 + 1, y, 0x85});
         }
         if (pk != std::string::npos) {
-            size_t st = t.find_first_not_of(' ');
             size_t en = t.find(';', pk);
+            int st = firstCol(s, y);
             int e = en == std::string::npos ? (int)(pk + 13) : (int)en - 1;
-            out.push_back({(int)st, y, e, y, 0x20});
+            if (en == std::string::npos) growReverse(s, y, st, e);     // tutta la barra colorata
+            else { int dummy = e; growReverse(s, y, st, dummy); }
+            out.push_back({st, y, e, y, 0x20});
         }
     }
     bool hasNumbers = false;
