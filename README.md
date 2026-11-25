@@ -78,6 +78,20 @@ cmake --build build\native -j 8
 .\build\native\vmtest.exe "originali\avventura-1-(fantasy)-versione-commerciale.tap" SPACE 2 1
 ```
 
+### Versione portable
+
+L'app scrive tutto nella cartella `dati\` accanto a `avventura1.exe`:
+
+| File | Contenuto |
+|------|-----------|
+| `dati\config.ini` | opzioni |
+| `dati\gioco.bin` | dati ricavati dalla tua copia `.tap` (non distribuire) |
+| `dati\saves\*.sav` | avventure salvate sul nastro virtuale |
+
+Basta copiare la cartella per spostare il gioco con i salvataggi. Al primo avvio vengono importati i dati
+di una versione precedente da `%APPDATA%\Avventura1Recomp`. Se la cartella non è scrivibile, per esempio
+dentro Programmi, l'app usa `%APPDATA%` e lo segnala nel launcher.
+
 ## Note legali
 
 Il gioco è un'opera commerciale protetta da copyright. Questo progetto contiene solo strumenti

@@ -327,6 +327,46 @@ static SDL_Surface* makeIcon() {
 }
 
 // ------------------------------------------------------------------ main
+static bool pathExists(const std::string& p) { SDL_PathInfo i; return SDL_GetPathInfo(p.c_str(), &i); }
+
+// Versione portable: tutti i dati vanno in "dati\" accanto all'eseguibile.
+// Al primo avvio copia i dati di una versione precedente da %APPDATA%, se ci sono.
+static std::string portableDataDir(App& a) {
+    const char* b = SDL_GetBasePath();
+    std::string base = b ? b : "./";
+    std::string dir = base + "dati/";
+    bool fresh = !pathExists(dir);
+    SDL_CreateDirectory((dir + "saves").c_str());
+    // controllo di scrittura (es. cartella in Programmi senza permessi)
+    std::string probe = dir + ".scrittura";
+    if (!writeFile(probe, "ok", 2)) {
+        char* pp = SDL_GetPrefPath("Avventura1Recomp", "Avventura1");
+        std::string fb = pp ? pp : "./";
+        SDL_free(pp);
+        SDL_CreateDirectory((fb + "saves").c_str());
+        a.status = "Cartella del gioco non scrivibile: dati in AppData";
+        a.statusError = true;
+        return fb;
+    }
+    SDL_RemovePath(probe.c_str());
+    const char* appdata = SDL_getenv("APPDATA");
+    if (fresh && appdata) {
+        std::string old = std::string(appdata) + "/Avventura1Recomp/Avventura1/";
+        if (pathExists(old)) {
+            for (const char* f : {"config.ini", "gioco.bin"})
+                if (pathExists(old + f)) SDL_CopyFile((old + f).c_str(), (dir + f).c_str());
+            int n = 0;
+            char** list = SDL_GlobDirectory((old + "saves").c_str(), "*.sav", 0, &n);
+            for (int i = 0; list && i < n; i++)
+                SDL_CopyFile((old + "saves/" + list[i]).c_str(), (dir + "saves/" + list[i]).c_str());
+            SDL_free(list);
+            a.status = "Dati importati dalla versione precedente";
+            a.statusError = false;
+        }
+    }
+    return dir;
+}
+
 static void saveShot(App& a, const std::string& path) {
     SDL_Surface* s = SDL_RenderReadPixels(a.ren, nullptr);
     if (s) { SDL_SaveBMP(s, path.c_str()); SDL_DestroySurface(s); }
@@ -342,10 +382,7 @@ int main(int argc, char** argv) {
     int frame = 0;
     if (!SDL_Init(SDL_INIT_VIDEO)) { SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Avventura 1", SDL_GetError(), nullptr); return 1; }
     App a;
-    char* pp = SDL_GetPrefPath("Avventura1Recomp", "Avventura1");
-    a.pref = pp ? pp : "./";
-    SDL_free(pp);
-    SDL_CreateDirectory((a.pref + "saves").c_str());
+    a.pref = portableDataDir(a);
     a.loadConfig();
 
     int ww = Ui::W, wh = Ui::H;
