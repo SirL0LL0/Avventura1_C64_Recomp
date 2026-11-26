@@ -7,12 +7,13 @@
 '       (un solo viaggio per volta, a sorte, al posto della Carovana)
 !HOOK 560 GOTO 7590
 !HOOK 680 GOTO 7605
+!HOOK 3430 GOTO 7695
 ' --- le offerte della taverna (riga 560 originale, con la terza a sorte)
 7590 UV=0:IF INT(3*RND(0))=0 THEN UV=INT(3*RND(0))+1
 7591 PRINT "{clr}{up}{rvon}* 1 *{rvof} Un ";LA$;" che":PRINT "vive presso ";LB$:PRINT "terrorizza gli abitanti della regione ;":PRINT "taglia di {rvon}{yel}£";A9;"{left}{wht}{rvof} a chi lo uccidera'.":GOSUB 50:GOSUB 570:IF UV>0 THEN ON UV GOTO 7595,7596,7597
 7592 PRINT "{down}{rvon}* 3 *{rvof} Sta' per partire la Carovana":PRINT "che tutti i mesi si reca nella favolosa":PRINT "citta' di {rvon}{lgrn}Babbakesch{rvof}{wht} ,dove vengono fab-":PRINT "bricate armi e oggetti magici !":GOSUB 50:GOTO 620
 7595 PRINT "{down}{rvon}{lgrn}* 3 *{rvof}{wht} Parte una carovana di mercanti":PRINT "per {lgrn}Kho{wht}, villaggio ai bordi della":PRINT "giungla dove sorge il Tempio di LYSS.":PRINT "Due settimane di cammino.":GOSUB 50:GOTO 620
-7596 PRINT "{down}{rvon}{yel}* 3 *{rvof}{wht} Una nave mercantile salpa per":PRINT "{yel}Kebir{wht}, la citta' del Sultano: Arena e":PRINT "gran mercato. Passaggio £ 400,":PRINT "due settimane di mare.":GOSUB 50:GOTO 620
+7596 PRINT "{down}{rvon}{yel}* 3 *{rvof}{wht} Una nave mercantile salpa per":PRINT "{yel}Kebir{wht}, la citta' del Sultano: Arena e":PRINT "gran mercato: £ 400 o lavori a bordo,":PRINT "due settimane di mare.":GOSUB 50:GOTO 620
 7597 PRINT "{down}{rvon}{lblu}* 3 *{rvof}{wht} Fratello Anselmo, un pellegrino,":PRINT "cerca una scorta fino al Tempio di LYSS":PRINT "a Kho: 3 settimane, compenso £ 800.":GOSUB 50:GOTO 620
 7605 IF N=3 AND UV>0 THEN ON UV GOTO 7620,7650,8900
 7606 ON N GOTO 760,1660,850,2090,690
@@ -58,16 +59,41 @@
 7778 PRINT "{down}Possiedi £";DN:GOSUB 4580:GOTO 7760
 7790 SU=1:GOSUB 340:SU=0:GOTO 7700
 7795 TK=TK+2:POKE 56832,3:PRINT "{clr}Riprendi la strada di casa...":GOSUB 50:IM$="":NM$="":GOSUB 3010:GOSUB 160:GOSUB 230:PRINT "{down}Dopo 2 settimane sei di nuovo a casa.":GOSUB 4580:GOTO 340
-' --- per mare verso Kebir
-7650 IF DN<400 THEN PRINT "{clr}Il capitano vuole £ 400 per il viaggio":PRINT "e tu non li hai.":GOSUB 4580:GOTO 490
-7651 DN=DN-400:TK=TK+2:POKE 56832,3:MP$="kebir":POKE 56834,1:PRINT "{clr}Ti imbarchi su una nave mercantile...":GOSUB 50
-7652 IF INT(3*RND(0))>0 THEN PRINT "{down}Il mare e' calmo: viaggio tranquillo.":GOSUB 50:GOTO 7660
-7653 PRINT "{down}{rvon}PIRATI delle Isole Nere !{rvof}":PRINT "Una galea nera abborda la nave !":GOSUB 50:GOSUB 2790:NM$=" pirati ":IM$="":GOSUB 4580:PRINT "{clr}":GOSUB 3150
-7654 IF FU=1 THEN PRINT "{down}Ti nascondi nella stiva finche' i":PRINT "pirati se ne vanno.":GOSUB 50
-7660 GOSUB 160:GOSUB 230:PRINT "{clr}":GOTO 7800
+' --- per mare: passaggio pagato o lavoro nella ciurma (UD 1 andata, 2 ritorno; UC 1 ciurma)
+'     la ciurma non puo' fuggire dalla mischia, ma sceglie una manovra navale con un tiro di dado
+7650 MP$="nave":POKE 56834,1:PRINT "{clr}Al porto una nave mercantile salpa":PRINT "per {yel}Kebir{wht}: due settimane di mare.":UD=1:GOTO 7655
+7655 PRINT "{down}{rvon}* 1 *{rvof} pagare il passaggio  {yel}£ 400{wht}":PRINT "{down}{rvon}* 2 *{rvof} arruolarti nella ciurma":PRINT "    niente fuga, ma manovre navali":PRINT "    e una parte del bottino":PRINT "{down}{rvon}* 3 *{rvof} rinunciare"
+7656 GOSUB 2760:ON N GOTO 7660,7662,7664:PRINT "{up}{up}":GOTO 7656
+7660 IF DN<400 THEN PRINT "{down}Non hai le £ 400 del passaggio.":GOSUB 4580:ON UD GOTO 490,7800
+7661 DN=DN-400:UC=0:GOTO 7666
+7662 UC=1:PRINT "{down}Il nostromo ti squadra: 'A bordo, e":PRINT "niente lamentele !'":GOSUB 50:GOTO 7666
+7664 ON UD GOTO 490,7800
+7666 TK=TK+2:POKE 56832,3:PRINT "{clr}La nave prende il largo...":GOSUB 50:IF INT(3*RND(0))>0 THEN PRINT "{down}Il mare e' calmo: viaggio tranquillo.":GOSUB 50:GOTO 7690
+7667 MP$="pirati":POKE 56834,1:PRINT "{down}{rvon}PIRATI delle Isole Nere !{rvof}":PRINT "Una galea nera punta sulla nave !":GOSUB 50:GOSUB 2790:IF UC=0 THEN 7685
+7668 PRINT "{down}Il capitano ti chiama al timone:":PRINT "{rvon}* 1 *{rvof} virare sottovento (Destrezza)":PRINT "{rvon}* 2 *{rvof} caricare la balista (Forza)":PRINT "{rvon}* 3 *{rvof} speronare la galea (Fortuna)"
+7669 GOSUB 2760:ON N GOTO 7670,7673,7676:PRINT "{up}{up}":GOTO 7669
+7670 MW=DE:GOSUB 7680:IF ZZ=1 THEN NM=INT(NM/2)+1:PRINT "{down}{lgrn}La nave sfugge alla galea: solo";NM:PRINT "pirati riescono ad abbordare.{wht}":GOTO 7685
+7671 PRINT "{down}La virata e' lenta: la galea vi":PRINT "abborda con tutti i pirati !":GOTO 7685
+7673 MW=FO:GOSUB 7680:IF ZZ=1 THEN MX=INT(NM/3)+1:NM=NM-MX:PRINT "{down}{lgrn}La balista abbatte";MX;"{left} pirati !{wht}":GOTO 7685
+7674 RF=RF-1:POKE 56833,2:PRINT "{down}La balista s'inceppa e ti ferisce:":PRINT "Robustezza";RF:IF RF<=0 THEN PRINT "{down}Sei morto !":GOTO 2680
+7675 GOTO 7685
+7676 MW=FR:GOSUB 7680:IF ZZ=1 THEN PRINT "{down}{lgrn}Lo sperone squarcia la galea, che":PRINT "affonda con tutti i pirati !{wht}":DN=DN+300:POKE 56833,4:PRINT "Ripescate un forziere: £ 300 a te.":GOSUB 50:GOTO 7690
+7677 NM=NM+2:RF=RF-2:POKE 56833,2:PRINT "{down}L'urto ti getta a terra: 2 ferite,":PRINT "e i pirati abbordano in";NM;"{left} !":IF RF<=0 THEN PRINT "{down}Sei morto !":GOTO 2680
+7678 GOTO 7685
+' tiro di dado della manovra: MW = caratteristica, ZZ = 1 se riesce
+7680 PRINT "{down}Devi tirare non piu' di";MW;"{left} su 21.":GOSUB 20:GOSUB 50:ZZ=0:IF MW>=D6 THEN ZZ=1
+7681 RETURN
+7685 NM$=" pirati ":IM$="":GOSUB 4580:PRINT "{clr}":GOSUB 3150
+7686 IF FU=1 THEN PRINT "{down}Ti nascondi nella stiva finche' i":PRINT "pirati se ne vanno.":GOSUB 50:GOTO 7690
+7687 IF UC=1 THEN DN=DN+300:POKE 56833,4:PRINT "{down}La tua parte del bottino: £ 300.":GOSUB 50
+7690 GOSUB 160:GOSUB 230:UC=0:IF UD=1 THEN PRINT "{clr}":GOTO 7800
+7691 PRINT "{down}Dopo 2 settimane sei di nuovo a casa.":GOSUB 4580:GOTO 340
+' --- in mischia: chi e' della ciurma non puo' fuggire (riga 3430 originale)
+7695 IF UC=1 THEN PRINT "{down}Della ciurma non si fugge: combatti !":GOSUB 50:GOTO 3510
+7696 GOSUB 60:PRINT "{down}Puoi fare la scelta di :":PRINT "* 1 * Tentare la fuga":PRINT "* 2 * Continuare il combattimento":GOTO 3440
 ' --- Kebir
 7800 POKE 56832,5:MP$="kebir":POKE 56834,1:PRINT "{clr}{yel}KEBIR{wht}, la citta' del Sultano":PRINT "{down}Minareti bianchi, vele colorate e il":PRINT "frastuono del gran mercato del porto."
-7805 PRINT "{down}{rvon}* 1 *{rvof} l'Arena dei campioni":PRINT "{down}{rvon}* 2 *{rvof} il Mercato delle spezie":PRINT "{down}{rvon}{yel}* 3 *{rvof}{wht} il banditore del Sultano":PRINT "{down}{rvon}* 4 *{rvof} rivedere il personaggio":PRINT "{down}{rvon}* 5 *{rvof} tornare a casa (nave £ 400)"
+7805 PRINT "{down}{rvon}* 1 *{rvof} l'Arena dei campioni":PRINT "{down}{rvon}* 2 *{rvof} il Mercato delle spezie":PRINT "{down}{rvon}{yel}* 3 *{rvof}{wht} il banditore del Sultano":PRINT "{down}{rvon}* 4 *{rvof} rivedere il personaggio":PRINT "{down}{rvon}* 5 *{rvof} tornare a casa per mare"
 7810 GOSUB 2760:IF N>5 THEN PRINT "{up}{up}":GOTO 7810
 7815 ON N GOTO 7820,7860,9100,7890,7895
 ' --- l'Arena: duello contro il Campione del Sultano
@@ -90,5 +116,4 @@
 7872 DN=DN-800:WX=WX+1:OS$(WX)="Filtro magico":POKE 56833,4:PRINT "{down}Hai comprato un Filtro magico."
 7878 PRINT "{down}Possiedi £";DN:GOSUB 4580:GOTO 7860
 7890 SU=1:GOSUB 340:SU=0:GOTO 7800
-7895 IF DN<400 THEN PRINT "{down}Ti servono £ 400 per la nave.":GOSUB 4580:GOTO 7800
-7896 DN=DN-400:TK=TK+2:POKE 56832,3:PRINT "{clr}Riprendi il mare verso casa...":GOSUB 50:GOSUB 160:GOSUB 230:PRINT "{down}Dopo 2 settimane sei di nuovo a casa.":GOSUB 4580:GOTO 340
+7895 MP$="nave":POKE 56834,1:PRINT "{clr}Al porto di Kebir una nave salpa":PRINT "verso casa: due settimane di mare.":UD=2:GOTO 7655

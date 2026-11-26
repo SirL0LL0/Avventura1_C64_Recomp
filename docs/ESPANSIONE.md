@@ -23,6 +23,7 @@ I numeri di riga sono quelli del listato decompilato.
 | Viaggi verso Kho e Kebir e scorta del pellegrino: in taverna ne compare uno alla volta (1 volta su 3) come offerta 3, al posto della Carovana | fatto |
 | Tempio di LYSS: atrio con i riti della dea e le missioni della sacerdotessa (Calice, reliquie del santo, strega del Lago di Lava) | fatto |
 | Kebir: il banditore del Sultano al bazar con tre imprese (Scorpione gigante, tomba del Re Antico con le Mummie, Djinn della lampada); i mostri nuovi seguono le regole del duello originale (iniziale D = 95%) | fatto |
+| Viaggi per mare: passaggio a pagamento o lavoro nella ciurma; la ciurma non fugge dai pirati ma sceglie una manovra navale (Destrezza, Forza o Fortuna con il tiro di dado del gioco) e divide il bottino | fatto |
 | Spade magiche con nome: Lama di Fiamma (+50), Spada del Vento (+75), Spada dei Re (+100) | fatto |
 | Kho: Tempio di LYSS (purificazione, benedizione dell'arma, offerte) e Guaritore | fatto |
 | Kebir: Arena dei campioni (duello a premio) e Mercato delle spezie | fatto |
