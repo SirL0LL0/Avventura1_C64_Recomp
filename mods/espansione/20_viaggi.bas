@@ -10,9 +10,9 @@
 7606 IF N>5 THEN PRINT "{up}{up}":GOTO 650
 7607 GOTO 670
 7610 PRINT "{clr}{yel}Viaggi verso terre lontane{wht}":MP$="carovana":POKE 56834,1
-7611 PRINT "{down}{rvon}* 1 *{rvof} Kho, ai bordi della giungla":PRINT "      2 settimane di cammino":PRINT "{down}{rvon}* 2 *{rvof} Kebir, la citta' del Sultano":PRINT "      2 settimane per mare, nave £ 400":PRINT "{down}{rvon}* 3 *{rvof} restare in citta'"
-7612 GOSUB 2760:IF N>3 THEN PRINT "{up}{up}":GOTO 7612
-7613 ON N GOTO 7620,7650,490
+7611 PRINT "{down}{rvon}* 1 *{rvof} Kho, ai bordi della giungla":PRINT "      2 settimane di cammino":PRINT "{down}{rvon}* 2 *{rvof} Kebir, la citta' del Sultano":PRINT "      2 settimane per mare, nave £ 400":PRINT "{down}{rvon}* 3 *{rvof} Scortare un pellegrino al Tempio":PRINT "      di LYSS a Kho (compenso £ 800)":PRINT "{down}{rvon}* 4 *{rvof} restare in citta'"
+7612 GOSUB 2760:IF N>4 THEN PRINT "{up}{up}":GOTO 7612
+7613 ON N GOTO 7620,7650,8900,490
 ' --- in cammino verso Kho: gli incontri del gioco originale
 7620 TK=TK+2:POKE 56832,3:MP$="kho":POKE 56834,1:PRINT "{clr}Ti incammini verso Kho, per i sentieri":PRINT "che costeggiano la giungla...":GOSUB 50:IM$="":NM$="":GOSUB 3010:IF I<=3 THEN 7625
 7621 FU=0:GOSUB 3550

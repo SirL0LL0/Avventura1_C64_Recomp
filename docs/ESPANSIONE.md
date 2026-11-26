@@ -15,11 +15,11 @@ I numeri di riga sono quelli del listato decompilato.
 | Audio: due SID emulati (6 voci in stereo), player, 8 brani originali, effetti sonori | fatto |
 | Sistema di mod: modulo P-code separato, agganci alle righe originali, registri `$DE00` | fatto |
 | Pannello PETSCII con ritratto, didascalia e scheda del personaggio | fatto |
-| Ritratti: mostri delle cacce (11), taverna, carovana, Babbakesch, Armaiolo, Spada, Filtro, morte, Eroe, Tempio, Kho, Kebir, Arena | fatto (23) |
+| Ritratti: mostri delle cacce (11), luoghi, negozi, oggetti, morte, Eroe | fatto |
 | Musica e immagini di scena in tutto il gioco originale | fatto |
 | Armi comuni, armature (contano nel duello e nella mischia), Pane elfico (F3), Armaiolo | fatto |
 | Salvataggi estesi e compatibili con quelli vecchi | fatto |
-| Ritratti per gruppi di nemici, imboscate, personaggi e committenti | da fare |
+| Ritratti per gruppi di nemici, imboscate e personaggi (maga, guerriero, avventuriero, pellegrino) | fatto (41 in tutto) |
 | Viaggi dalla taverna (opzione 6) verso Kho e Kebir, con incontri e pirati | fatto |
 | Kho: Tempio di LYSS (purificazione, benedizione dell'arma, offerte) e Guaritore | fatto |
 | Kebir: Arena dei campioni (duello a premio) e Mercato delle spezie | fatto |
@@ -27,7 +27,8 @@ I numeri di riga sono quelli del listato decompilato.
 | Mostri nuovi nelle cacce: Basilisco, Idra delle paludi, Spettro del Re | fatto |
 | Missione: il Calice di LYSS (dal Tempio di Kho; trappola, enigma, Spettro guardiano) | fatto |
 | Salvataggi MOD2: anche arma benedetta, maledizioni e missioni (legge MOD1 e originali) | fatto |
-| Altre missioni (scorta del pellegrino, catena del Conte Movas) | da fare |
+| Missione: scorta del pellegrino a Kho (dai Viaggi) | fatto |
+| Catena del Conte Movas dal Barone Gudrund: spia, torre di guardia, duello finale | fatto |
 
 ### Compilare e provare la mod
 

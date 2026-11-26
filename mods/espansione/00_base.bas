@@ -8,7 +8,7 @@
 ' Variabili della mod: solo prefissi M e U.
 ' ============================================================================
 !HOOK 10 GOSUB 7000
-!HOOK 340 GOSUB 7100
+!HOOK 340 GOSUB 7105
 !HOOK 490 GOSUB 7100
 !HOOK 760 GOSUB 7111
 !HOOK 850 GOSUB 7112
@@ -27,6 +27,8 @@
 7000 MV=1:POKE 56832,1:MP$="":POKE 56834,0:RETURN
 ' --- taverna e scheda del personaggio
 7100 POKE 56832,2:MP$="taverna":POKE 56834,1:RETURN
+' --- scheda del personaggio: il suo ritratto
+7105 POKE 56832,2:MP$=NP$:POKE 56834,1:RETURN
 ' --- partenze: caccia, carovana, missione, Barone
 7111 POKE 56832,3:MP$=LA$:POKE 56834,1:RETURN
 7112 POKE 56832,3:MP$="carovana":POKE 56834,1:RETURN
