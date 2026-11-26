@@ -184,7 +184,7 @@ pic("vampiro", "vampir", "Vampiro maledetto", () => {
   return img;
 });
 
-pic("orco", "orchi,orchetti", "Orchi", () => {
+pic("orco", "orchi,orchetti,coboldi", "Orchi", () => {
   const img = new Img(S, S);
   P.sky(img, "swamp", 96); P.pine(img, 16, 100, 1.6); P.pine(img, 112, 100, 1.4);
   P.ground(img, 98, [0, 9, 5]);
@@ -348,7 +348,7 @@ pic("idra", "idra", "Idra delle paludi", () => {
   return img;
 });
 
-pic("spettro", "spettro,zombi", "Spettro del Re", () => {
+pic("spettro", "spettro,spettri,zombi", "Spettro del Re", () => {
   const img = new Img(S, S);
   P.stoneWall(img, 0, 127, [0, 0, 6, 11]);
   P.glow(img, 64, 60, 56, [0, 6, 6, 14]);
@@ -363,7 +363,7 @@ pic("spettro", "spettro,zombi", "Spettro del Re", () => {
   return img;
 });
 
-pic("ragno", "ragni,centipedi", "Ragni giganti", () => {
+pic("ragno", "ragni,centipedi,caverne", "Ragni giganti", () => {
   const img = new Img(S, S);
   img.fill(0); P.glow(img, 64, 64, 64, [0, 0, 11]);
   for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; img.line(64, 50, 64 + Math.cos(a) * 90, 50 + Math.sin(a) * 90, 12); }
@@ -625,6 +625,35 @@ repic("gigante", scene((img) => { P.sky(img, "day", 110); P.mountains(img, 128, 
   { cloth: [0, 9, 8], hair: [0, 9], hairStyle: "wild", beard: "long", bigNose: true, eyes: 6, jaw: 23 }));
 repic("arena", scene((img) => { P.sky(img, "day", 60); for (let y = 30; y < 128; y++) for (let x = 0; x < S; x++) img.tone(x, y, [9, 8, 7, 1], 0.6 + 0.2 * Math.sin(x * 0.3)); for (let x = 4; x < S; x += 14) img.rect(x, 40, x + 8, 60, 0); },
   { skin: [0, 9, 8, 10], bare: true, helm: [9, 8, 7, 1], eyes: 9, beard: "short", hair: [0, 0, 9], weapon: "sword", angry: true }));
+
+pic("dama", "danzatrice,figlia,moglie,amante", "La dama rapita", scene((img) => { P.stoneWall(img, 0, 127, [0, 6, 4, 10]); img.rect(84, 14, 116, 60, 0); img.rect(99, 14, 101, 60, 9); img.rect(84, 36, 116, 37, 9); P.moon(img, 108, 26, 5); },
+  { cloth: [0, 2, 10], collar: 7, hair: [0, 9, 8], hairStyle: "long", eyes: 5, mouth: 10, jaw: 16, amulet: true, circlet: [2, 10, 1] }));
+pic("tesoro", "statua d'oro,perla nera,gemma rossa,pietra ircana,tesoro", "Il tesoro perduto", () => {
+  const img = new Img(S, S);
+  img.fill(0); P.glow(img, 64, 70, 60, [0, 9, 9, 8]);
+  const L = new Img(S, S);
+  L.poly([[22, 84], [106, 84], [100, 120], [28, 120]], [0, 9, 8], { k: 0.8 });
+  L.rect(22, 84, 106, 88, 7); L.rect(60, 84, 68, 96, 7); L.rect(28, 104, 100, 106, 9);
+  for (let i = 0; i < 9; i++) L.ell(30 + i * 9, 82 - (i % 3) * 3, 5, 4, [9, 8, 7, 1], { add: 0.2 });
+  L.ell(48, 62, 10, 10, [0, 6, 4, 14], { add: 0.2 });
+  L.poly([[64, 30], [82, 52], [64, 76], [46, 52]], [0, 2, 10, 1], { k: 1 }); L.line(64, 30, 64, 76, 10); L.line(46, 52, 82, 52, 2);
+  L.ell(84, 66, 8, 8, [2, 10, 1], { add: 0.2 });
+  img.put(L, 0, 0, 0);
+  for (const [x, y] of [[40, 40], [92, 44], [70, 24]]) { img.line(x - 3, y, x + 3, y, 1); img.line(x, y - 3, x, y + 3, 1); }
+  return img;
+});
+pic("pergamena", "pergamena", "La pergamena sacra", () => {
+  const img = new Img(S, S);
+  P.stoneWall(img, 0, 90, [0, 9, 11, 12]); P.planks(img, 90, 127);
+  P.torch(img, 112, 40);
+  const L = new Img(S, S), pa = [9, 8, 7, 1];
+  L.poly([[24, 34], [104, 34], [104, 100], [24, 100]], pa, { k: 0.6, add: 0.3 });
+  L.cap(20, 30, 108, 30, 6, pa); L.cap(20, 104, 108, 104, 6, pa);
+  for (let y = 44; y < 92; y += 7) for (let x = 32; x < 96; x += 8) L.rect(x, y, x + 4 + ((x * y) % 3), y + 1, 9);
+  L.ell(64, 96, 7, 6, [0, 2, 10], { add: 0.2 });
+  img.put(L, 0, 0, 0);
+  return img;
+});
 
 // ------------------------------------------------------------------ icone (16x16)
 pic("icona_filtro", "", "Filtro magico", () => {

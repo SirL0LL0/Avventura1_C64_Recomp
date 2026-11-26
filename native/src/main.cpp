@@ -213,8 +213,9 @@ void GameHost::ioWrite(int reg, int v) {
     else if (reg == 2) {
         std::string s;
         if (v == 0 || !app->vm || !app->vm->varString("MP$", s)) { app->pic = nullptr; app->subject.clear(); return; }
-        app->subject = asciiFromPetscii(s);
-        app->pic = findPicture(app->pictures, app->subject);
+        // soggetto senza illustrazione: resta quella di prima, invece di una cornice vuota
+        const Picture* p = findPicture(app->pictures, asciiFromPetscii(s));
+        if (p) { app->pic = p; app->subject = asciiFromPetscii(s); }
     }
 }
 

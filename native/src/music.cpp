@@ -404,6 +404,7 @@ void MusicPlayer::close() {
 void MusicPlayer::play(const std::string& name) {
     if (name == currentName_) return;
     currentName_ = name;
+    fastFade_ = name == "morte";                 // il tema della morte parte subito
     if (name == "colonna") { request_ = -3; return; }
     int idx = -1;
     for (size_t i = 0; i < songs_.size(); i++) if (songs_[i].name == name) idx = (int)i;
@@ -488,7 +489,7 @@ void MusicPlayer::tick() {
     if (rq != -2) { pendingSong_ = rq; if (cur_ < 0) fadeOut_ = 0; }
     if (pendingSong_ != -2) {
         // dissolvenza in uscita (circa 1,5 s), poi il nuovo brano entra piano
-        fadeOut_ -= 1.0f / 75;
+        fadeOut_ -= fastFade_ ? 1.0f / 4 : 1.0f / 75;
         if (fadeOut_ <= 0) {
             fadeOut_ = 0;
             plMode_ = pendingSong_ == -3;
@@ -496,7 +497,7 @@ void MusicPlayer::tick() {
             pendingSong_ = -2;
         }
     } else if (fadeOut_ < 1) {
-        fadeOut_ += 1.0f / 125;                      // dissolvenza in entrata (circa 2,5 s)
+        fadeOut_ += fastFade_ ? 1.0f / 6 : 1.0f / 125;   // dissolvenza in entrata (circa 2,5 s)
         if (fadeOut_ > 1) fadeOut_ = 1;
     }
     int sr = sfxRequest_.exchange(-1);
