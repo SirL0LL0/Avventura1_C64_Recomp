@@ -14,7 +14,7 @@ pic("guerriero", "thoralf,beowulf,hotan,guerriero", "Il guerriero", () => {
   P.sky(img, "dusk", 96); P.sun(img, 100, 70, 10);
   P.mountains(img, 100, [[20, 40, 34], [70, 30, 30], [118, 46, 30]], [0, 6, 4, 14]);
   P.ground(img, 100, [9, 8, 5]);
-  img.put(P.human({ body: R.steel, chain: true, pauldron: R.steel, legs: R.leather, cloak: R.red, hair: [9, 8, 7], beard: [9, 8, 7], weapon: "sword", shield: R.red, shieldMark: 7 }), 0, 0, 0);
+  img.put(P.bust({ cloth: R.steel, chain: true, armor: R.steel, cloak: R.red, hair: [9, 8, 7], hairStyle: "long", beard: "short", eyes: 14, weapon: "sword", scar: true }), 0, 0, 0);
   return img;
 });
 
@@ -115,7 +115,7 @@ pic("maga", "rowena", "La maga", () => {
   const img = new Img(S, S);
   P.stoneWall(img, 0, 127, [0, 6, 11, 12]);
   P.glow(img, 96, 22, 26, [6, 4, 14]);
-  img.put(P.human({ robe: R.purple, body: R.purple, sleeve: R.purple, hairBack: R.red, hair: R.red, weapon: "staff", belt: false, eyes: 6, mouth: 2, cloak: [0, 6, 14] }), 0, 0, 0);
+  img.put(P.bust({ cloth: R.purple, robe: [0, 6, 4], hair: [0, 2, 10], hairStyle: "long", eyes: 5, mouth: 10, circlet: [6, 14, 3], amulet: true, weapon: "staff", jaw: 17 }), 0, 0, 0);
   img.speck(10, 10, 50, 60, 3, 0.01, 4).speck(80, 40, 120, 90, 1, 0.006, 9);
   return img;
 });
@@ -133,7 +133,7 @@ pic("pellegrino", "pellegrino,anselmo", "Fratello Anselmo", () => {
   const img = new Img(S, S);
   P.sky(img, "dusk", 100); P.sun(img, 30, 80, 14);
   P.ground(img, 100, [9, 8, 7]);
-  img.put(P.human({ robe: [0, 9, 8, 10], body: [0, 9, 8, 10], sleeve: [0, 9, 8], hood: [0, 9, 8], beard: [12, 15, 1], longBeard: true, weapon: "staff", belt: true, beltC: 7 }), 0, 0, 0);
+  img.put(P.bust({ cloth: [0, 9, 8, 10], hood: [0, 9, 8], hair: [11, 12, 15, 1], beard: "long", eyes: 6, weapon: "staff" }), 0, 0, 0);
   return img;
 });
 
@@ -581,6 +581,50 @@ pic("corona", "eroe", "Sei un Eroe!", () => {
   img.put(L, 0, 0, 0);
   return img;
 });
+
+// ------------------------------------------------------------------ mezzibusti dei personaggi
+// sostituiscono le figure intere: stesso nome, parole chiave e didascalia
+const repic = (name, draw) => { const p = pics.find((x) => x.name === name); p.draw = draw; };
+const scene = (bg, b) => () => { const img = new Img(S, S); bg(img); img.put(P.bust(b), 0, 0, 0); return img; };
+const dusk = (img) => { P.sky(img, "dusk", 100); P.mountains(img, 104, [[16, 40, 30], [112, 46, 30]], [0, 6, 4, 14]); };
+const night = (img) => { P.sky(img, "night", 110); P.moon(img, 104, 22, 12); };
+const wall = (r) => (img) => P.stoneWall(img, 0, 127, r);
+const forest = (img) => { P.sky(img, "day", 100); for (let x = 0; x < S; x += 26) P.tree(img, x + 8, 110, 1.2, [0, 5, 13]); };
+const storm = (img) => { P.sky(img, "storm", 104); P.mountains(img, 108, [[24, 50, 40], [104, 40, 36]], [0, 11, 12, 15]); };
+
+repic("avventuriero", scene((img) => { P.sky(img, "day", 100); P.hills(img, 104, [0, 9, 5, 13], 3); P.tree(img, 14, 112, 1.2); P.tree(img, 116, 110, 1); },
+  { cloth: [0, 9, 8, 10], collar: 9, cloak: [0, 9, 5], hair: [0, 9, 8], eyes: 14, weapon: "sword", mustache: true }));
+repic("conte", scene((img) => { P.stoneWall(img, 0, 127, [0, 0, 11, 2]); img.rect(36, 0, 92, 127, 2); for (let y = 0; y < 128; y += 4) img.rect(36, y, 92, y, 9); P.torch(img, 14, 44); P.torch(img, 114, 44); },
+  { cloth: [0, 0, 11, 12], armor: [0, 11, 12], cloak: [0, 6, 4], hair: [0, 0, 11], skin: [11, 12, 15], crown: true, eyes: 2, angry: true, mouth: 0, scar: true, weapon: "sword" }));
+repic("barbaro", scene(storm, { bare: true, skin: [9, 8, 10], hair: [9, 8, 7], hairStyle: "wild", beard: "short", helm: [11, 12, 15], horns: [11, 12, 15, 1], weapon: "axe", eyes: 6, angry: true, jaw: 21 }));
+repic("armigero", scene((img) => { P.sky(img, "storm", 104); img.rect(0, 50, 127, 127, 11); for (let x = 0; x < 128; x += 10) img.rect(x, 44, x + 5, 50, 11); },
+  { cloth: [0, 2, 10], chain: true, armor: [0, 11, 12, 15], helm: [11, 12, 15], nasal: true, eyes: 6, weapon: "spear", mouth: 0 }));
+repic("bandito", scene((img) => { P.sky(img, "night", 110); P.moon(img, 22, 24, 10); P.pine(img, 110, 128, 2); },
+  { cloth: [0, 9, 8], hood: [0, 0, 11], cloak: [0, 0, 11], hair: [0, 0, 9], beard: "short", eyes: 7, scar: true, angry: true, weapon: "sword" }));
+repic("vampiro", scene((img) => { P.sky(img, "night", 128); P.moon(img, 64, 40, 34); },
+  { cloth: [0, 0, 11], collar: 2, cloak: [0, 2, 10], skin: [11, 12, 15], hair: [0, 0, 11], glow: 2, fangs: true, mouth: 2, jaw: 17 }));
+repic("elfo", scene(forest, { cloth: [0, 5, 13], collar: 7, cloak: [0, 9, 5], hair: [8, 7, 1], hairStyle: "long", ears: "pointed", eyes: 5, circlet: [5, 13, 1], weapon: "bow", jaw: 17 }));
+repic("nano", scene((img) => { P.stoneWall(img, 0, 127, [0, 9, 11, 12], 10, 18); P.torch(img, 14, 40); P.torch(img, 114, 40); },
+  { cloth: [0, 6, 14], armor: [11, 12, 15], helm: [11, 12, 15], nasal: true, hair: [2, 8, 7], beard: "long", bigNose: true, eyes: 6, jaw: 22, weapon: "axe" }));
+repic("orco", scene((img) => { P.sky(img, "swamp", 110); P.pine(img, 14, 128, 1.8); P.pine(img, 114, 128, 1.6); },
+  { skin: [0, 9, 5, 13], bare: true, ears: "pointed", tusks: true, glow: 7, angry: true, hair: [0, 0, 11], hairStyle: "wild", bigNose: true, weapon: "axe", jaw: 21, mouth: 0 }));
+repic("troll", scene(wall([0, 9, 11, 12]), { skin: [0, 11, 5, 13], bare: true, bigNose: true, tusks: true, eyes: 2, angry: true, hair: [0, 9], hairStyle: "wild", jaw: 23, mouth: 0 }));
+repic("tigroide", scene((img) => { P.sky(img, "dusk", 110); for (let x = 0; x < S; x += 18) img.cap(x + 4, 127, x + 8, 50, 2, [0, 9, 5]); }, {
+  skin: [9, 8, 7], bare: true, ears: "pointed", eyes: 5, glow: 13, hair: [0, 9, 8], hairStyle: "wild", mouth: 0, fangs: true, weapon: "spear" }));
+repic("demone", scene((img) => { P.sky(img, "fire", 128); img.speck(0, 80, 127, 127, 7, 0.02, 3); },
+  { skin: [0, 2, 10], bare: true, horns: [11, 12, 15, 1], glow: 7, angry: true, fangs: true, ears: "pointed", mouth: 0, cloak: [0, 0, 4], weapon: "spear" }));
+repic("minotauro", () => {
+  const img = new Img(S, S);
+  P.stoneWall(img, 0, 127, [0, 9, 8, 10], 12, 20);
+  const L = P.bust({ skin: [0, 9, 8, 10], bare: true, horns: [12, 15, 1], hair: [0, 9], hairStyle: "wild", glow: 2, angry: true, jaw: 22, weapon: "axe" });
+  L.ell(64, 66, 13, 9, [9, 8, 10]); L.ell(58, 68, 2, 2, 0); L.ell(70, 68, 2, 2, 0); L.curve([[60, 74], [64, 79], [68, 74]], 1, 7);
+  img.put(L, 0, 0, 0);
+  return img;
+});
+repic("gigante", scene((img) => { P.sky(img, "day", 110); P.mountains(img, 128, [[20, 40, 30], [108, 50, 30]], [6, 14, 3]); },
+  { cloth: [0, 9, 8], hair: [0, 9], hairStyle: "wild", beard: "long", bigNose: true, eyes: 6, jaw: 23 }));
+repic("arena", scene((img) => { P.sky(img, "day", 60); for (let y = 30; y < 128; y++) for (let x = 0; x < S; x++) img.tone(x, y, [9, 8, 7, 1], 0.6 + 0.2 * Math.sin(x * 0.3)); for (let x = 4; x < S; x += 14) img.rect(x, 40, x + 8, 60, 0); },
+  { skin: [0, 9, 8, 10], bare: true, helm: [9, 8, 7, 1], eyes: 9, beard: "short", hair: [0, 0, 9], weapon: "sword", angry: true }));
 
 // ------------------------------------------------------------------ icone (16x16)
 pic("icona_filtro", "", "Filtro magico", () => {

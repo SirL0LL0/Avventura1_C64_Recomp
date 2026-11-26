@@ -207,7 +207,8 @@ void GameHost::onEnd(const std::string& reason) { app->endReason = reason; }
 void GameHost::ioWrite(int reg, int v) {
     static const char* SONG[] = {"", "titolo", "taverna", "viaggio", "battaglia", "citta", "tempio", "eroe", "morte"};
     static const char* SFX[] = {"", "colpo", "ferita", "mancato", "moneta", "pozione", "livello", "clic", "magia", "porta"};
-    if (reg == 0) app->musicScene = v >= 0 && v < 9 ? SONG[v] : "";
+    // la colonna sonora e' fissa: dalla partita contano solo la fanfara (7) e il tema della morte (8)
+    if (reg == 0) app->musicScene = v == 7 || v == 8 ? SONG[v] : "";
     else if (reg == 1) { if (v > 0 && v < 10) g_music.sfx(SFX[v]); }
     else if (reg == 2) {
         std::string s;
@@ -572,8 +573,8 @@ int main(int argc, char** argv) {
     for (int i = 1; i + 1 < argc; i++)
         if (std::strcmp(argv[i], "--wav") == 0) {
             SDL_Init(0);
-            for (const char* s : {"titolo", "taverna", "viaggio", "battaglia", "citta", "tempio", "eroe", "morte"}) {
-                float pk = g_music.exportWav(s, 30, std::string(argv[i + 1]) + "/" + s + ".wav");
+            for (const char* s : {"valle", "focolare", "sentiero", "stelle", "mare", "eroe", "morte"}) {
+                float pk = g_music.exportWav(s, 105, std::string(argv[i + 1]) + "/" + s + ".wav");
                 std::printf("%-10s picco=%.3f\n", s, pk);
             }
             SDL_Quit();
@@ -641,11 +642,9 @@ int main(int argc, char** argv) {
 
         SDL_SetRenderDrawColor(a.ren, 0, 0, 0, 255);
         SDL_RenderClear(a.ren);
-        // musica di scena (in partita la sceglie la mod tramite i registri $DE00; di base: viaggio)
-        if (a.screen != Screen_::GAME) g_music.play("titolo");
-        else if (a.endReason == "error" || a.endReason == "reset") {}
-        else if (a.musicScene.empty()) g_music.play("viaggio");
-        else g_music.play(a.musicScene);
+        // colonna sonora: brani tranquilli che si alternano; fanfara e morte quando la mod li chiede
+        if (a.screen == Screen_::GAME && !a.musicScene.empty() && a.endReason != "reset") g_music.play(a.musicScene);
+        else if (a.screen != Screen_::GAME || a.endReason != "error") g_music.play("colonna");
         if (a.screen == Screen_::GAME) drawGame(a, dt);
         else drawLauncher(a);
         a.ui.endFrame();

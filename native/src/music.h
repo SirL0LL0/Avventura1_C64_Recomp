@@ -71,6 +71,12 @@ private:
     VState vs_[6];
     // effetti
     int sfxIdx_ = -1, sfxTick_ = 0;
+    // colonna sonora: brani generati che si alternano ("colonna"), con variazioni a ogni giro
+    std::vector<int> playlist_;           // indici in songs_ dei brani generati
+    int plPos_ = 0;
+    bool plMode_ = false;
+    uint32_t seed_ = 12345;
+    void startPlaylistSong();
     float fadeOut_ = 1.0f;                // volume del brano 0..1 (dissolvenze)
     float gain_ = 0.0f;                   // volume ammorbidito usato in uscita
     int pendingSong_ = -2;

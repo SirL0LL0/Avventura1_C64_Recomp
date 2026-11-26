@@ -50,7 +50,7 @@ Nel launcher, il pulsante **VERSIONE** passa da "Originale" alle mod trovate nel
 | 56833 | effetto: 1 colpo, 2 ferita, 3 mancato, 4 moneta, 5 pozione, 6 livello, 7 clic, 8 magia, 9 porta |
 | 56834 | immagine: 1 mostra il soggetto scritto in `MP$` (per esempio `MP$=LA$`), 0 nasconde |
 
-Le immagini si scelgono per parola chiave contenuta nel nome. Le illustrazioni (128×128, tavolozza del C64, con ombreggiature retinate) sono disegnate da codice in `tools/art/` (`pictures.js`, `parts.js`, `engine.js`). `node tools/art/build.js anteprima.png` rigenera `native/src/art_data.h` e un foglio d'anteprima. Ci sono anche le icone dei consumabili: nella scheda il Filtro (F1) e il Pane elfico (F3) si usano con un clic quando il gioco aspetta il loro tasto. La musica è in `native/src/songs.h`.
+Le immagini si scelgono per parola chiave contenuta nel nome. Le illustrazioni (128×128, tavolozza del C64, con ombreggiature retinate) sono disegnate da codice in `tools/art/` (`pictures.js`, `parts.js`, `engine.js`). `node tools/art/build.js anteprima.png` rigenera `native/src/art_data.h` e un foglio d'anteprima. Ci sono anche le icone dei consumabili: nella scheda il Filtro (F1) e il Pane elfico (F3) si usano con un clic quando il gioco aspetta il loro tasto. La colonna sonora è fissa: 5 brani lenti (valle, focolare, sentiero, stelle, mare) si alternano e a ogni giro la melodia viene ricomposta da `generateSong` in `native/src/music.cpp` sugli stessi accordi. La partita non cambia più musica a ogni schermata: restano solo la fanfara (registro 7) e il tema della morte (8), in `native/src/songs.h`. I personaggi sono mezzibusti (`bust` in `tools/art/parts.js`).
 
 ---
 

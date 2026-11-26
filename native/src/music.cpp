@@ -217,6 +217,124 @@ const std::vector<SfxDef>& sfxTable() {
     return t;
 }
 
+// ------------------------------------------------------------------ brani generati
+// Ogni brano ha tonalita', modo e due progressioni di 8 battute; la melodia e' composta a ogni
+// giro da frasi di 2 battute (motivo, variazione, nuova frase, cadenza): riconoscibile ma mai identica.
+struct GenDef {
+    const char* name; int root; int mode; int tempo; int progA[8], progB[8];
+    uint8_t leadWave; uint16_t padCut;
+};
+const int MODES[5][7] = {
+    {0, 2, 4, 5, 7, 9, 11},   // ionico
+    {0, 2, 3, 5, 7, 9, 10},   // dorico
+    {0, 2, 3, 5, 7, 8, 10},   // eolio
+    {0, 2, 4, 6, 7, 9, 11},   // lidio
+    {0, 2, 4, 5, 7, 9, 10},   // misolidio
+};
+const GenDef GEN[] = {
+    {"valle", 62, 1, 20, {0, 0, 3, 3, 0, 0, 6, 6}, {5, 5, 3, 3, 0, 6, 4, 4}, 1, 0x150},
+    {"focolare", 67, 0, 19, {0, 5, 3, 4, 0, 5, 3, 4}, {3, 4, 5, 5, 3, 4, 0, 0}, 4, 0x170},
+    {"sentiero", 64, 2, 21, {0, 5, 2, 6, 0, 5, 3, 4}, {3, 0, 6, 2, 5, 3, 6, 6}, 1, 0x140},
+    {"stelle", 65, 3, 22, {0, 1, 0, 1, 0, 1, 5, 4}, {3, 2, 1, 1, 0, 1, 5, 0}, 1, 0x130},
+    {"mare", 69, 4, 20, {0, 0, 6, 6, 3, 3, 0, 0}, {4, 3, 6, 0, 4, 3, 6, 6}, 4, 0x160},
+};
+
+struct Rng { uint32_t s; int operator()(int n) { s = s * 1664525u + 1013904223u; return (int)((s >> 8) % (uint32_t)n); } };
+
+struct MNote { int row, len, deg; bool rest; };
+
+void generateSong(Song& s, const GenDef& g, uint32_t seed) {
+    Rng rnd{seed * 2654435761u + 7};
+    const int* sc = MODES[g.mode];
+    auto midiOf = [&](int base, int deg) { int o = deg >= 0 ? deg / 7 : -((-deg + 6) / 7); return base + 12 * o + sc[((deg % 7) + 7) % 7]; };
+    s = Song();
+    s.name = g.name; s.tempo = g.tempo; s.bar = 8; s.loop = false;
+    s.cutoff[0] = 0x300; s.res[0] = 4;
+    s.cutoff[1] = g.padCut; s.res[1] = 6;
+    Instrument lead; lead.wave = g.leadWave; lead.attack = 6; lead.decay = 10; lead.sustain = 9; lead.release = 11;
+    lead.pw = 0x600; lead.sweep = g.leadWave == 4 ? 3 : 0; lead.vibDepth = 12; lead.vibSpeed = 0.2f; lead.vibDelay = 18;
+    lead.filtered = g.leadWave == 4;
+    Instrument eco = lead; eco.wave = 1; eco.sustain = 6; eco.filtered = false; eco.vibDepth = 0;
+    Instrument basso; basso.wave = 1; basso.attack = 8; basso.decay = 10; basso.sustain = 10; basso.release = 11;
+    Instrument arpa; arpa.wave = 4; arpa.pw = 0x700; arpa.attack = 0; arpa.decay = 10; arpa.sustain = 0; arpa.release = 11; arpa.filtered = true;
+    Instrument pad; pad.wave = 2; pad.attack = 12; pad.decay = 10; pad.sustain = 10; pad.release = 12; pad.filtered = true;
+    s.inst["lead"] = lead; s.inst["eco"] = eco; s.inst["basso"] = basso; s.inst["arpa"] = arpa; s.inst["pad"] = pad;
+    s.v[0].inst = "lead"; s.v[1].inst = "eco"; s.v[2].inst = "basso"; s.v[3].inst = "arpa"; s.v[4].inst = "pad"; s.v[5].inst = "pad";
+    // accordi delle 32 battute: A A B A
+    int chord[32];
+    for (int p = 0; p < 4; p++) for (int b = 0; b < 8; b++) chord[p * 8 + b] = p == 2 ? g.progB[b] : g.progA[b];
+    chord[31] = 0;
+    auto chordTone = [&](int bar, int deg) {        // grado dell'accordo piu' vicino a deg
+        int best = deg, bd = 99;
+        for (int o = -1; o <= 2; o++) for (int k = 0; k < 3; k++) {
+            int d = chord[bar] + 2 * k + 7 * o;
+            if (std::abs(d - deg) < bd) { bd = std::abs(d - deg); best = d; }
+        }
+        return best;
+    };
+    static const int RH[][4] = {{4, 4, 0, 0}, {2, 2, 4, 0}, {3, 1, 4, 0}, {6, 2, 0, 0}, {2, 2, 2, 2}, {4, 2, 2, 0}, {8, 0, 0, 0}, {2, 6, 0, 0}, {3, 3, 2, 0}};
+    auto phrase = [&](int bar0) {                    // frase di 2 battute
+        std::vector<MNote> ph;
+        int deg = chordTone(bar0, 2 + rnd(5));
+        for (int b = 0; b < 2; b++) {
+            const int* r = RH[rnd(9)];
+            int row = b * 8;
+            for (int k = 0; k < 4 && r[k]; k++) {
+                if (row % 4 == 0) deg = chordTone(bar0 + b, deg);
+                ph.push_back({row, r[k], deg, k > 0 && rnd(7) == 0});
+                static const int STEP[] = {-2, -1, -1, 0, 1, 1, 2};
+                deg += STEP[rnd(7)];
+                deg = std::max(0, std::min(9, deg));
+                row += r[k];
+            }
+        }
+        return ph;
+    };
+    auto vary = [&](std::vector<MNote> ph, int bar0, bool cadence) {
+        int n = (int)ph.size();
+        for (int i = std::max(1, n - 2); i < n; i++) ph[i].deg = std::max(0, std::min(9, ph[i].deg + (rnd(3) - 1)));
+        if (cadence) {                               // ultima nota lunga sulla fondamentale
+            MNote& last = ph.back();
+            last.rest = false;
+            int best = chord[bar0 + 1];
+            for (int o = 0; o <= 1; o++) if (std::abs(chord[bar0 + 1] + 7 * o - last.deg) < std::abs(best - last.deg)) best = chord[bar0 + 1] + 7 * o;
+            last.deg = best;
+            last.len = 16 - last.row;
+        }
+        return ph;
+    };
+    std::vector<MNote> motif = phrase(0);
+    for (int p = 0; p < 4; p++) {
+        int base = p * 8;
+        std::vector<MNote> A = p == 2 ? phrase(base) : vary(motif, base, false);
+        std::vector<MNote> B = phrase(base + 4);
+        std::vector<MNote> phs[4] = {A, vary(A, base + 2, false), B, vary(p == 2 ? B : A, base + 6, true)};
+        for (int k = 0; k < 4; k++) {
+            if (p == 0 && k == 0) continue;          // introduzione: solo arpa e accordi
+            for (auto& n : phs[k]) {
+                if (n.rest) continue;
+                int row = (base + k * 2) * 8 + n.row;
+                s.v[0].ev.push_back({row, n.len, midiOf(g.root, n.deg), 0});
+                if (p > 0) s.v[1].ev.push_back({row + 3, n.len, midiOf(g.root - 12, n.deg - (p == 2 ? 2 : 0)), 0});
+            }
+        }
+    }
+    // basso, arpa e accordi
+    for (int b = 0; b < 32; b++) {
+        int row = b * 8, d = chord[b];
+        int rootM = midiOf(g.root - 24, d);
+        if (rootM < 36) rootM += 12;
+        if (b % 8 >= 4 && rnd(2)) { s.v[2].ev.push_back({row, 4, rootM, 0}); s.v[2].ev.push_back({row + 4, 4, midiOf(g.root - 24, d + 4) + (rootM - midiOf(g.root - 24, d)), 0}); }
+        else s.v[2].ev.push_back({row, 8, rootM, 0});
+        int step = (b / 8 == 1) ? 4 : 2;
+        static const int ARP[] = {0, 2, 4, 7, 4, 2};
+        for (int r = 0, k = 0; r < 8; r += step, k++) s.v[3].ev.push_back({row + r, step, midiOf(g.root - 12, d + ARP[(k + b) % 6]), 0});
+        s.v[4].ev.push_back({row, 8, midiOf(g.root - 12, d + 2), 0});
+        s.v[5].ev.push_back({row, 8, midiOf(g.root - 12, d + 4), 0});
+    }
+    s.rows = 32 * 8 + 8;                             // una battuta di coda per le code dei suoni
+}
+
 } // namespace
 
 std::vector<std::string> MusicPlayer::songNames() const {
@@ -225,8 +343,15 @@ std::vector<std::string> MusicPlayer::songNames() const {
     return n;
 }
 
+static void addGenerated(std::vector<Song>& songs, std::vector<int>& pl) {
+    pl.clear();
+    for (size_t i = 0; i < sizeof(GEN) / sizeof(GEN[0]); i++) { songs.emplace_back(); generateSong(songs.back(), GEN[i], 1); pl.push_back((int)songs.size() - 1); }
+}
+
 bool MusicPlayer::open() {
     songs_ = parseSongs(SONGS_TEXT);
+    addGenerated(songs_, playlist_);
+    { SDL_Time t = 0; SDL_GetCurrentTime(&t); seed_ = (uint32_t)(t / 1000000); plPos_ = (int)(seed_ % playlist_.size()); }
     sid_[0] = new Sid(RATE);
     sid_[1] = new Sid(RATE);
     SDL_AudioSpec spec{SDL_AUDIO_F32, 2, RATE};
@@ -237,7 +362,7 @@ bool MusicPlayer::open() {
 }
 
 float MusicPlayer::exportWav(const std::string& song, double seconds, const std::string& path) {
-    if (songs_.empty()) songs_ = parseSongs(SONGS_TEXT);
+    if (songs_.empty()) { songs_ = parseSongs(SONGS_TEXT); addGenerated(songs_, playlist_); }
     if (!sid_[0]) { sid_[0] = new Sid(RATE); sid_[1] = new Sid(RATE); }
     int idx = -1;
     for (size_t i = 0; i < songs_.size(); i++) if (songs_[i].name == song) idx = (int)i;
@@ -279,6 +404,7 @@ void MusicPlayer::close() {
 void MusicPlayer::play(const std::string& name) {
     if (name == currentName_) return;
     currentName_ = name;
+    if (name == "colonna") { request_ = -3; return; }
     int idx = -1;
     for (size_t i = 0; i < songs_.size(); i++) if (songs_[i].name == name) idx = (int)i;
     request_ = idx;
@@ -296,6 +422,13 @@ void SDLCALL MusicPlayer::callback(void* ud, SDL_AudioStream* s, int additional,
     std::vector<float> buf(frames * 2);
     self->render(buf.data(), frames);
     SDL_PutAudioStreamData(s, buf.data(), frames * 2 * (int)sizeof(float));
+}
+
+void MusicPlayer::startPlaylistSong() {
+    if (playlist_.empty()) return;
+    int k = plPos_++ % (int)playlist_.size();
+    generateSong(songs_[playlist_[k]], GEN[k], seed_++);
+    startSong(playlist_[k]);
 }
 
 void MusicPlayer::startSong(int idx) {
@@ -356,7 +489,12 @@ void MusicPlayer::tick() {
     if (pendingSong_ != -2) {
         // dissolvenza in uscita (circa 1,5 s), poi il nuovo brano entra piano
         fadeOut_ -= 1.0f / 75;
-        if (fadeOut_ <= 0) { fadeOut_ = 0; startSong(pendingSong_); pendingSong_ = -2; }
+        if (fadeOut_ <= 0) {
+            fadeOut_ = 0;
+            plMode_ = pendingSong_ == -3;
+            if (plMode_) startPlaylistSong(); else startSong(pendingSong_);
+            pendingSong_ = -2;
+        }
     } else if (fadeOut_ < 1) {
         fadeOut_ += 1.0f / 125;                      // dissolvenza in entrata (circa 2,5 s)
         if (fadeOut_ > 1) fadeOut_ = 1;
@@ -369,7 +507,11 @@ void MusicPlayer::tick() {
         long row = tickCount_ / s.tempo;
         if (s.rows > 0 && row >= s.rows) {
             if (s.loop) { tickCount_ = 0; row = 0; }
-            else { for (int k = 0; k < 2; k++) for (auto& vo : sid_[k]->v) vo.gate = false; cur_ = -1; }
+            else {
+                for (int k = 0; k < 2; k++) for (auto& vo : sid_[k]->v) vo.gate = false;
+                cur_ = -1;
+                if (plMode_) { startPlaylistSong(); return; }   // brano successivo della colonna sonora
+            }
         }
         if (cur_ >= 0) {
             for (int vi = 0; vi < 6; vi++) {
