@@ -1,5 +1,7 @@
 // Schermate del launcher: menu principale, opzioni, salvataggi, informazioni.
 #include "app.h"
+#include "music.h"
+#include <algorithm>
 #include <cmath>
 
 static void fileDialogCallback(void* ud, const char* const* files, int) {
@@ -69,16 +71,26 @@ static void mainMenu(App& a) {
 static void optionsMenu(App& a) {
     Ui& u = a.ui;
     u.text(Ui::W / 2, 60, "OPZIONI", 6, pal::gold, CENTER);
-    float pw = 760, px = (Ui::W - pw) / 2, py = 170;
-    u.panel(px, py, pw, 520);
-    float x = px + 40, w = pw - 80, y = py + 40, g = 66;
+    float pw = 760, px = (Ui::W - pw) / 2, py = 150;
+    u.panel(px, py, pw, 560);
+    float x = px + 40, w = pw - 80, y = py + 30, g = 58;
+    auto bar = [](int v) { std::string s; for (int i = 0; i < 10; i++) s += i < v ? '|' : '.'; return s; };
+    if (u.option("Musica", a.cfg.musicVol ? bar(a.cfg.musicVol) : "NO", x, y + g * 5, w)) {
+        a.cfg.musicVol = std::clamp(a.cfg.musicVol + u.optionDir(), 0, 10);
+        g_music.setVolumes(a.cfg.musicVol / 10.0f, a.cfg.sfxVol / 10.0f);
+    }
+    if (u.option("Effetti sonori", a.cfg.sfxVol ? bar(a.cfg.sfxVol) : "NO", x, y + g * 6, w)) {
+        a.cfg.sfxVol = std::clamp(a.cfg.sfxVol + u.optionDir(), 0, 10);
+        g_music.setVolumes(a.cfg.musicVol / 10.0f, a.cfg.sfxVol / 10.0f);
+        g_music.sfx("moneta");
+    }
     if (u.option("Velocita'", SPEEDS[a.cfg.speed].name, x, y, w)) a.cfg.speed = (a.cfg.speed + u.optionDir() + SPEED_COUNT) % SPEED_COUNT;
     if (u.option("Effetto CRT", a.cfg.crt ? "SI" : "NO", x, y + g, w)) a.cfg.crt = !a.cfg.crt;
     if (u.option("Schermo intero", a.cfg.fullscreen ? "SI" : "NO", x, y + g * 2, w)) { a.cfg.fullscreen = !a.cfg.fullscreen; a.applyVideo(); }
     if (u.option("Scala intera", a.cfg.integerScale ? "SI" : "NO", x, y + g * 3, w)) { a.cfg.integerScale = !a.cfg.integerScale; a.applyVideo(); }
     if (u.option("Suggerimenti tasti", a.cfg.hints ? "SI" : "NO", x, y + g * 4, w)) a.cfg.hints = !a.cfg.hints;
-    u.text(px + pw / 2, y + g * 5 + 10, "Originale = tempi simili al C64 vero", 2, pal::dim, CENTER, false);
-    if (u.button("INDIETRO", px + pw / 2 - 160, py + 430, 320, 56) || u.backPressed()) {
+    u.text(px + pw / 2, y + g * 7 + 4, "Originale = tempi simili al C64 vero", 2, pal::dim, CENTER, false);
+    if (u.button("INDIETRO", px + pw / 2 - 160, py + 480, 320, 56) || u.backPressed()) {
         a.saveConfig();
         a.screen = a.optionsReturn;
         u.resetFocus();

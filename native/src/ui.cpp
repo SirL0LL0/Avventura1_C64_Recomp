@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "font_data.h"
+#include "music.h"
 #include <cmath>
 #include <cstdlib>
 
@@ -165,6 +166,7 @@ bool Ui::button(const std::string& label, float x, float y, float w, float h, bo
     bool hot, focused;
     nextWidget(x, y, w, h, enabled, hot, focused);
     bool act = enabled && ((hot && click_) || (focused && (key_ == SDLK_RETURN || key_ == SDLK_KP_ENTER || key_ == SDLK_SPACE)));
+    if (act) g_music.sfx("clic");
     Color base = enabled ? (focused ? Color{92, 62, 150} : Color{44, 34, 82}) : Color{36, 32, 50};
     fill(x + 4, y + 4, w, h, Color{0, 0, 0, 110});
     fill(x, y, w, h, base);

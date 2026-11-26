@@ -1,6 +1,7 @@
 // Avventura 1 - Recomp: applicazione nativa (SDL3).
 // Launcher + finestra di gioco con la VM del P-code originale.
 #include "app.h"
+#include "music.h"
 #include <SDL3/SDL_main.h>
 #include <algorithm>
 #include <cmath>
@@ -52,13 +53,15 @@ void App::loadConfig() {
         else if (k == "integer_scale") cfg.integerScale = n != 0;
         else if (k == "hints") cfg.hints = n != 0;
         else if (k == "tap") cfg.tapPath = val;
+        else if (k == "music") cfg.musicVol = std::clamp(n, 0, 10);
+        else if (k == "sfx") cfg.sfxVol = std::clamp(n, 0, 10);
     }
 }
 
 void App::saveConfig() {
     char buf[1200];
-    int n = std::snprintf(buf, sizeof buf, "speed=%d\ncrt=%d\nfullscreen=%d\ninteger_scale=%d\nhints=%d\ntap=%s\n",
-                          cfg.speed, cfg.crt, cfg.fullscreen, cfg.integerScale, cfg.hints, cfg.tapPath.c_str());
+    int n = std::snprintf(buf, sizeof buf, "speed=%d\ncrt=%d\nfullscreen=%d\ninteger_scale=%d\nhints=%d\nmusic=%d\nsfx=%d\ntap=%s\n",
+                          cfg.speed, cfg.crt, cfg.fullscreen, cfg.integerScale, cfg.hints, cfg.musicVol, cfg.sfxVol, cfg.tapPath.c_str());
     writeFile(pref + "config.ini", buf, n);
 }
 
@@ -460,8 +463,19 @@ int main(int argc, char** argv) {
         if (std::strcmp(argv[i], "--tap") == 0) tapArg = argv[i + 1];
     }
     if (argc == 2 && argv[1][0] != '-') tapArg = argv[1];      // .tap trascinato sull'eseguibile
+    // --wav <cartella>: esporta tutti i brani in WAV (ascolto e test) ed esce
+    for (int i = 1; i + 1 < argc; i++)
+        if (std::strcmp(argv[i], "--wav") == 0) {
+            SDL_Init(0);
+            for (const char* s : {"titolo", "taverna", "viaggio", "battaglia", "citta", "tempio", "eroe", "morte"}) {
+                float pk = g_music.exportWav(s, 30, std::string(argv[i + 1]) + "/" + s + ".wav");
+                std::printf("%-10s picco=%.3f\n", s, pk);
+            }
+            SDL_Quit();
+            return 0;
+        }
     int frame = 0;
-    if (!SDL_Init(SDL_INIT_VIDEO)) { SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Avventura 1", SDL_GetError(), nullptr); return 1; }
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) { SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Avventura 1", SDL_GetError(), nullptr); return 1; }
     App a;
     a.pref = portableDataDir(a);
     a.loadConfig();
@@ -481,6 +495,8 @@ int main(int argc, char** argv) {
     a.cursorArrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
     a.applyVideo();
     a.haveGame = a.loadCachedGame();
+    g_music.open();
+    g_music.setVolumes(a.cfg.musicVol / 10.0f, a.cfg.sfxVol / 10.0f);
     if (!tapArg.empty()) a.tryLoadTap(tapArg);
 
     uint64_t last = SDL_GetTicksNS();
@@ -514,6 +530,11 @@ int main(int argc, char** argv) {
 
         SDL_SetRenderDrawColor(a.ren, 0, 0, 0, 255);
         SDL_RenderClear(a.ren);
+        // musica di scena (in partita la sceglie la mod tramite i registri $DE00; di base: viaggio)
+        if (a.screen != Screen_::GAME) g_music.play("titolo");
+        else if (a.endReason == "error" || a.endReason == "reset") {}
+        else if (a.musicScene.empty()) g_music.play("viaggio");
+        else g_music.play(a.musicScene);
         if (a.screen == Screen_::GAME) drawGame(a, dt);
         else drawLauncher(a);
         a.ui.endFrame();
@@ -546,6 +567,7 @@ int main(int argc, char** argv) {
         SDL_RenderPresent(a.ren);
     }
     a.saveConfig();
+    g_music.close();
     SDL_DestroyTexture(a.c64tex);
     SDL_DestroyRenderer(a.ren);
     SDL_DestroyWindow(a.win);

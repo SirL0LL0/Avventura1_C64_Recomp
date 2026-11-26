@@ -17,6 +17,8 @@ struct Config {
     bool fullscreen = false;
     bool integerScale = false;
     bool hints = true;          // barra dei suggerimenti tasti
+    int musicVol = 7;           // 0-10
+    int sfxVol = 8;             // 0-10
     std::string tapPath;        // ultimo .tap fornito (solo informativo)
 };
 
@@ -73,6 +75,7 @@ struct App {
     std::string lineBuf;
     std::string endReason;       // fine partita in attesa di conferma
     double endAt = -1;           // istante di fine partita (per ignorare tasti premuti un attimo prima)
+    std::string musicScene;      // brano richiesto dalla partita ("" = predefinito)
     std::string toast;
     double toastUntil = 0;
     double budgetCarry = 0;
