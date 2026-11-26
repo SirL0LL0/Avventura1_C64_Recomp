@@ -3,20 +3,19 @@
 '   UK  arma benedetta (protegge dalle maledizioni, ferisce i non-morti)
 '   MF/MD  punti di Forza/Destrezza tolti dalle maledizioni (il Tempio li ridona)
 ' ============================================================================
-'   UV  1 = in taverna l'offerta 3 e' il viaggio (a caso, al posto della Carovana)
+'   UV  offerta 3 della taverna: 0 la Carovana originale, 1 Kho, 2 Kebir, 3 il pellegrino
+'       (un solo viaggio per volta, a sorte, al posto della Carovana)
 !HOOK 560 GOTO 7590
 !HOOK 680 GOTO 7605
 ' --- le offerte della taverna (riga 560 originale, con la terza a sorte)
-7590 UV=0:IF INT(3*RND(0))=0 THEN UV=1
-7591 PRINT "{clr}{up}{rvon}* 1 *{rvof} Un ";LA$;" che":PRINT "vive presso ";LB$:PRINT "terrorizza gli abitanti della regione ;":PRINT "taglia di {rvon}{yel}£";A9;"{left}{wht}{rvof} a chi lo uccidera'.":GOSUB 50:GOSUB 570:IF UV=1 THEN 7595
+7590 UV=0:IF INT(3*RND(0))=0 THEN UV=INT(3*RND(0))+1
+7591 PRINT "{clr}{up}{rvon}* 1 *{rvof} Un ";LA$;" che":PRINT "vive presso ";LB$:PRINT "terrorizza gli abitanti della regione ;":PRINT "taglia di {rvon}{yel}£";A9;"{left}{wht}{rvof} a chi lo uccidera'.":GOSUB 50:GOSUB 570:IF UV>0 THEN ON UV GOTO 7595,7596,7597
 7592 PRINT "{down}{rvon}* 3 *{rvof} Sta' per partire la Carovana":PRINT "che tutti i mesi si reca nella favolosa":PRINT "citta' di {rvon}{lgrn}Babbakesch{rvof}{wht} ,dove vengono fab-":PRINT "bricate armi e oggetti magici !":GOSUB 50:GOTO 620
-7595 PRINT "{down}{rvon}{lgrn}* 3 *{rvof}{wht} Una nave e una carovana partono":PRINT "per terre lontane: {lgrn}Kho{wht} nella giungla e":PRINT "{yel}Kebir{wht}, la citta' del Sultano. Si":PRINT "cercano scorte per i pellegrini !":GOSUB 50:GOTO 620
-7605 IF N=3 AND UV=1 THEN 7610
+7595 PRINT "{down}{rvon}{lgrn}* 3 *{rvof}{wht} Parte una carovana di mercanti":PRINT "per {lgrn}Kho{wht}, villaggio ai bordi della":PRINT "giungla dove sorge il Tempio di LYSS.":PRINT "Due settimane di cammino.":GOSUB 50:GOTO 620
+7596 PRINT "{down}{rvon}{yel}* 3 *{rvof}{wht} Una nave mercantile salpa per":PRINT "{yel}Kebir{wht}, la citta' del Sultano: Arena e":PRINT "gran mercato. Passaggio £ 400,":PRINT "due settimane di mare.":GOSUB 50:GOTO 620
+7597 PRINT "{down}{rvon}{lblu}* 3 *{rvof}{wht} Fratello Anselmo, un pellegrino,":PRINT "cerca una scorta fino al Tempio di LYSS":PRINT "a Kho: 3 settimane, compenso £ 800.":GOSUB 50:GOTO 620
+7605 IF N=3 AND UV>0 THEN ON UV GOTO 7620,7650,8900
 7606 ON N GOTO 760,1660,850,2090,690
-7610 PRINT "{clr}{yel}Viaggi verso terre lontane{wht}":MP$="carovana":POKE 56834,1
-7611 PRINT "{down}{rvon}* 1 *{rvof} Kho, ai bordi della giungla":PRINT "      2 settimane di cammino":PRINT "{down}{rvon}* 2 *{rvof} Kebir, la citta' del Sultano":PRINT "      2 settimane per mare, nave £ 400":PRINT "{down}{rvon}* 3 *{rvof} Scortare un pellegrino al Tempio":PRINT "      di LYSS a Kho (compenso £ 800)":PRINT "{down}{rvon}* 4 *{rvof} restare in citta'"
-7612 GOSUB 2760:IF N>4 THEN PRINT "{up}{up}":GOTO 7612
-7613 ON N GOTO 7620,7650,8900,490
 ' --- in cammino verso Kho: gli incontri del gioco originale
 7620 TK=TK+2:POKE 56832,3:MP$="kho":POKE 56834,1:PRINT "{clr}Ti incammini verso Kho, per i sentieri":PRINT "che costeggiano la giungla...":GOSUB 50:IM$="":NM$="":GOSUB 3010:IF I<=3 THEN 7625
 7621 FU=0:GOSUB 3550
@@ -28,11 +27,13 @@
 7715 ON N GOTO 7720,7760,7790,7795
 ' --- il Tempio di LYSS
 7720 POKE 56832,6:MP$="tempio":POKE 56834,1:PRINT "{clr}Il {rvon}TEMPIO DI LYSS{rvof}":PRINT "{down}Una sacerdotessa velata ti accoglie tra":PRINT "colonne d'avorio e lampade d'oro."
-7722 PRINT "{down}{rvon}* 1 *{rvof} Purificazione (£ 600 a punto)":PRINT "    ridona Forza e Destrezza perdute"
-7723 PRINT "{rvon}* 2 *{rvof} Benedizione dell'arma (£ 1500)":PRINT "    ripara dalle maledizioni e ferisce":PRINT "    i non-morti"
-7724 PRINT "{rvon}* 3 *{rvof} Offerta alla dea (£ 1000, +1 Fa)":PRINT "{rvon}* 4 *{rvof} uscire dal Tempio":IF MQ=0 THEN PRINT "{rvon}{yel}* 5 *{rvof}{wht} La missione della sacerdotessa"
-7725 GOSUB 2760:IF N>5 OR (N=5 AND MQ=1) THEN PRINT "{up}{up}":GOTO 7725
-7726 ON N GOTO 7730,7740,7750,7700,8700
+7722 PRINT "{down}{down}{rvon}* 1 *{rvof} I riti della dea":PRINT "{down}{rvon}{yel}* 2 *{rvof}{wht} Le missioni della sacerdotessa":PRINT "{down}{rvon}* 3 *{rvof} uscire dal Tempio"
+7725 GOSUB 2760:IF N>3 THEN PRINT "{up}{up}":GOTO 7725
+7726 ON N GOTO 7727,9000,7700
+' --- i riti della dea
+7727 PRINT "{clr}{rvon}I RITI DELLA DEA{rvof}":PRINT "{down}{rvon}* 1 *{rvof} Purificazione  {yel}£ 600{wht} a punto":PRINT "    ridona Forza e Destrezza perdute":PRINT "{down}{rvon}* 2 *{rvof} Benedizione dell'arma  {yel}£ 1500{wht}":PRINT "    ripara dalle maledizioni e ferisce":PRINT "    i non-morti"
+7728 PRINT "{down}{rvon}* 3 *{rvof} Offerta alla dea  {yel}£ 1000{wht}":PRINT "    +1 Fascino":PRINT "{down}{rvon}* 4 *{rvof} tornare nell'atrio"
+7729 GOSUB 2760:ON N GOTO 7730,7740,7750,7720:PRINT "{up}{up}":GOTO 7729
 7730 MX=MF+MD:IF MX=0 THEN PRINT "{down}Non c'e' nulla da purificare in te.":GOTO 7758
 7731 MC=600*MX:IF DN<MC THEN PRINT "{down}Servono £";MC;"{left}: non ne hai abbastanza.":GOTO 7758
 7732 DN=DN-MC:FO=FO+MF:AT=AT+5*MF:DE=DE+MD:MF=0:MD=0:POKE 56833,8:PRINT "{down}{lgrn}La luce della dea ti avvolge:":PRINT "hai ritrovato le forze perdute !{wht}":GOSUB 160:GOTO 7758
@@ -42,7 +43,7 @@
 7750 IF DN<1000 THEN PRINT "{down}Non hai abbastanza denaro.":GOTO 7758
 7751 IF FA>19 THEN PRINT "{down}La dea gradisce, ma il tuo Fascino":PRINT "e' gia' al massimo.":GOTO 7758
 7752 DN=DN-1000:FA=FA+1:POKE 56833,6:PRINT "{down}La dea gradisce l'offerta:":PRINT "il tuo Fascino sale a";FA
-7758 PRINT "{down}Possiedi £";DN:GOSUB 4580:GOTO 7720
+7758 PRINT "{down}Possiedi £";DN:GOSUB 4580:GOTO 7727
 ' --- il Guaritore
 7760 MP$="guaritore":POKE 56834,1:PRINT "{clr}La capanna del {rvon}GUARITORE{rvof}":PRINT "{down}Erbe appese, ossa e pozioni fumanti."
 7761 PRINT "{down}{rvon}* 1 *{rvof} Curare le ferite  £ 200":PRINT "{down}{rvon}* 2 *{rvof} Rito della forza vitale":PRINT "    +1 Robustezza massima  £ 4000":PRINT "{down}{rvon}* 3 *{rvof} uscire"

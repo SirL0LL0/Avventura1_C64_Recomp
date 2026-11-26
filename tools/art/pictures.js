@@ -655,6 +655,8 @@ pic("pergamena", "pergamena", "La pergamena sacra", () => {
   return img;
 });
 
+pic("strega", "strega", "La strega del Lago", scene((img) => { P.sky(img, "fire", 128); for (let y = 96; y < 128; y += 4) for (let x = (y * 3) % 9; x < S; x += 14) img.rect(x, y, x + 6, y, 8); },
+  { cloth: [0, 0, 4], hood: [0, 0, 4], skin: [0, 11, 5, 13], glow: 7, angry: true, fangs: true, bigNose: true, hair: [0, 0, 11], weapon: "staff", jaw: 16, mouth: 0, amulet: true }));
 // ------------------------------------------------------------------ icone (16x16)
 pic("icona_filtro", "", "Filtro magico", () => {
   const L = new Img(16, 16);

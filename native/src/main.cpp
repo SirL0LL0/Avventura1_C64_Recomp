@@ -101,6 +101,7 @@ void App::tryLoadTap(const std::string& path) {
 
 void App::refreshSaves() {
     saves.clear();
+    saveScroll = 0;
     std::string dir = pref + "saves";
     int n = 0;
     char** list = SDL_GlobDirectory(dir.c_str(), "*.sav", 0, &n);
@@ -432,8 +433,11 @@ static void drawGame(App& a, double dt) {
     }
     if (a.cfg.hints && !a.paused) {
         u.fill(g_gx, Ui::H - 34, C64W, 34, Color{0, 0, 0, 120});
-        const std::string hint = "Clic o tasti per scegliere - Frecce+Invio - F1/F3 o clic sulle icone - Esc menu";
-        const char* sp = SPEEDS[a.cfg.speed].name;
+        const std::string hint = "Clic o tasti - Frecce+Invio - F1/F3 o icone - Esc menu";
+        // versione in uso e velocita' (es. "ESPANSIONE - VEL. ORIGINALE")
+        std::string ver = a.modSel >= 0 && a.modSel < (int)a.modNames.size() ? a.modNames[a.modSel] : "Originale";
+        for (auto& ch : ver) ch = (char)std::toupper((unsigned char)ch);
+        const std::string sp = ver + " - VEL. " + SPEEDS[a.cfg.speed].name;
         float avail = C64W - 32 - u.textWidth(sp, 2) - 24, sc = 2;
         while (sc > 1 && u.textWidth(hint, sc) > avail) sc -= 0.125f;
         u.text(g_gx + 16, Ui::H - 17 - 4 * sc, hint, sc, Color{230, 230, 240, 220}, LEFT, false);
@@ -453,9 +457,20 @@ static void drawGame(App& a, double dt) {
         u.panel(px, py, pw, 520);
         u.text(Ui::W / 2, py + 30, "NASTRO VIRTUALE", 4, pal::gold, CENTER);
         u.text(Ui::W / 2, py + 80, "Scegli l'avventura da caricare", 2.5f, pal::parchment, CENTER);
+        // elenco scorrevole come nel launcher
+        const int VIS = 5, n = (int)a.saves.size(), maxS = n > VIS ? n - VIS : 0;
+        a.saveScroll -= u.wheel();
+        if (u.keyPressed(SDLK_PAGEDOWN)) a.saveScroll += VIS;
+        if (u.keyPressed(SDLK_PAGEUP)) a.saveScroll -= VIS;
+        a.saveScroll = std::max(0, std::min(maxS, a.saveScroll));
+        if (n > VIS) {
+            if (u.button("<<", px + 40, py + 450, 110, 50, a.saveScroll > 0)) a.saveScroll = std::max(0, a.saveScroll - VIS);
+            if (u.button(">>", px + pw - 150, py + 450, 110, 50, a.saveScroll < maxS)) a.saveScroll = std::min(maxS, a.saveScroll + VIS);
+        }
         int k = 0;
-        for (auto& s : a.saves) {
-            if (k >= 5) break;
+        for (int i = a.saveScroll; i < n; i++) {
+            auto& s = a.saves[i];
+            if (k >= VIS) break;
             if (u.button(s.name + "  " + s.when, px + 40, py + 130 + k * 64, pw - 80, 54)) {
                 auto v = readFile(s.path);
                 std::string t(v.begin(), v.end());

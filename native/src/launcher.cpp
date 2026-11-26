@@ -118,8 +118,14 @@ static void savesMenu(App& a) {
         u.text(Ui::W / 2, py + 130, "In gioco scegli * 9 * per salvare", 2, pal::dim, CENTER, false);
         u.text(Ui::W / 2, py + 160, "sul nastro virtuale.", 2, pal::dim, CENTER, false);
     }
+    // elenco scorrevole: rotellina, PagSu/PagGiu o i pulsanti sotto l'elenco
+    const int VIS = 6, n = (int)a.saves.size(), maxS = n > VIS ? n - VIS : 0;
+    a.saveScroll -= u.wheel();
+    if (u.keyPressed(SDLK_PAGEDOWN)) a.saveScroll += VIS;
+    if (u.keyPressed(SDLK_PAGEUP)) a.saveScroll -= VIS;
+    a.saveScroll = std::max(0, std::min(maxS, a.saveScroll));
     int shown = 0;
-    for (size_t i = 0; i < a.saves.size() && shown < 6; i++, shown++) {
+    for (size_t i = a.saveScroll; i < a.saves.size() && shown < VIS; i++, shown++) {
         auto& s = a.saves[i];
         float y = py + 30 + shown * 66;
         std::string label = s.name + "   " + s.when;
@@ -138,7 +144,13 @@ static void savesMenu(App& a) {
             if (u.button("ELIMINA", px + pw - 210, y, 180, 54, true, "Cancella questo salvataggio")) a.confirmDelete = (int)i;
         }
     }
-    if (a.saves.size() > 6) u.text(Ui::W / 2, py + 430, "(altri salvataggi nella cartella)", 2, pal::dim, CENTER, false);
+    if (n > VIS) {
+        char buf[64];
+        std::snprintf(buf, sizeof buf, "%d-%d di %d", a.saveScroll + 1, std::min(n, a.saveScroll + VIS), n);
+        u.text(Ui::W / 2, py + 438, buf, 2, pal::dim, CENTER, false);
+        if (u.button("PIU' RECENTI", px + 30, py + 424, 250, 40, a.saveScroll > 0)) a.saveScroll = std::max(0, a.saveScroll - VIS);
+        if (u.button("PIU' VECCHI", px + pw - 280, py + 424, 250, 40, a.saveScroll < maxS)) a.saveScroll = std::min(maxS, a.saveScroll + VIS);
+    }
     if (u.button("APRI CARTELLA", px + 60, py + 476, 340, 56, true, "Apre la cartella dei salvataggi")) {
         std::string url = "file:///" + a.pref + "saves";
         SDL_OpenURL(url.c_str());

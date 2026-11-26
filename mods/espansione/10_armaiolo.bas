@@ -3,12 +3,16 @@
 '   UA$/UB  arma comune e suo bonus in % (si somma ad AT come la Spada magica)
 '   UR$/UR  armatura e protezione (1-3)
 '   UP      pani elfici (F3 quando il gioco chiede "premi un tasto": +3 Ro)
+'   US$     nome della Spada magica posseduta (ricavato da OS$: +50/+75/+100)
 ' ============================================================================
 !HOOK 1230 GOTO 7200
 !HOOK 4160 GOSUB 7400
 !HOOK 3240 GOSUB 7410
 !HOOK 4600 GOSUB 7420
 !HOOK 470 GOSUB 7520
+!HOOK 1270 GOTO 7270
+!HOOK 1360 GOTO 7275
+!HOOK 450 GOTO 7285
 !HOOK 4420 GOSUB 7530
 !HOOK 4490 GOSUB 7540
 ' --- il bazar: quattro botteghe
@@ -16,6 +20,18 @@
 7205 PRINT "{down}{rvon}{grn}* 5 *{wht}{rvof} voglio rivedere il personaggio":PRINT "{down}{rvon}{yel}* 6 *{wht}{rvof} ritorno a casa ":MP$="babbakesch":POKE 56834,1
 7210 GOSUB 2760:IF N>6 THEN PRINT "{up}{up}":GOTO 7210
 7220 ON N GOTO 1260,1380,1470,7300,1560,1620
+' --- il Fabbro magico: le tre spade hanno un nome
+7270 PRINT "{down}{down}{rvon}* 1 *{rvof} Lama di Fiamma +50%   {yel}£ 7500{wht}":PRINT "{down}{rvon}* 2 *{rvof} Spada del Vento +75%  {yel}£ 10000{wht}":PRINT "{down}{rvon}* 3 *{rvof} Spada dei Re +100%   {yel}£ 20000{wht}":GOSUB 4270:GOTO 1280
+7275 GOSUB 7280:POKE 56833,6:MP$="spada":POKE 56834,1:PRINT "{down}Hai acquistato la {yel}";US$;"{wht} !":GOTO 1570
+' nome della spada magica in US$ (dall'oggetto "Spada magica +NN" in OS$)
+7280 US$="":FOR MI=1 TO WX:IF LEFT$(OS$(MI),1)="S" THEN MX=VAL(MID$(OS$(MI),14))
+7281 NEXT:US$="Spada Magica":IF MX=50 THEN US$="Lama di Fiamma"
+7282 IF MX=75 THEN US$="Spada del Vento"
+7283 IF MX=100 THEN US$="Spada dei Re"
+7284 MX=0:RETURN
+' scheda del personaggio: la spada con il suo nome (e a capo, senza sovrascritture)
+7285 IF KS=0 THEN 460
+7286 GOSUB 7280:PRINT " la ";US$:GOTO 460
 ' --- l'Armaiolo
 7300 PRINT "{clr}La bottega dell' {rvon}ARMAIOLO{rvof}":MP$="armaiolo":POKE 56834,1:PRINT "{down}Armi (ne porti una, oltre alla spada):"
 7305 PRINT "{rvon}* 1 *{rvof} Pugnale +10%  {yel}£ 800{wht}":PRINT "{rvon}* 2 *{rvof} Lancia +15%  {yel}£ 1500{wht}":PRINT "{rvon}* 3 *{rvof} Ascia +20%  {yel}£ 2500{wht}"
@@ -58,7 +74,7 @@
 7522 IF UP>0 THEN PRINT UP;"pani elfici (F3)"
 7523 RETURN
 ' --- salvataggio esteso (in coda al file: i vecchi salvataggi restano validi)
-7530 PRINT#8,"MOD2":PRINT#8,UA$:PRINT#8,UB:PRINT#8,UR$:PRINT#8,UR:PRINT#8,UP:PRINT#8,UK:PRINT#8,MF:PRINT#8,MD:PRINT#8,MQ:PRINT#8,UM:RETURN
+7530 PRINT#8,"MOD2":PRINT#8,UA$:PRINT#8,UB:PRINT#8,UR$:PRINT#8,UR:PRINT#8,UP:PRINT#8,UK:PRINT#8,MF:PRINT#8,MD:PRINT#8,MQ:PRINT#8,UM:PRINT#8,MR:PRINT#8,MT:RETURN
 7540 INPUT#8,M$:IF M$<>"MOD1" AND M$<>"MOD2" THEN RETURN
-7541 INPUT#8,UA$,UB,UR$,UR,UP:IF M$="MOD2" THEN INPUT#8,UK,MF,MD,MQ,UM
+7541 INPUT#8,UA$,UB,UR$,UR,UP:IF M$="MOD2" THEN INPUT#8,UK,MF,MD,MQ,UM,MR,MT
 7542 RETURN

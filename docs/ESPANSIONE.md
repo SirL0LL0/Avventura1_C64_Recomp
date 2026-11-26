@@ -20,7 +20,9 @@ I numeri di riga sono quelli del listato decompilato.
 | Armi comuni, armature (contano nel duello e nella mischia), Pane elfico (F3), Armaiolo | fatto |
 | Salvataggi estesi e compatibili con quelli vecchi | fatto |
 | Ritratti per gruppi di nemici, imboscate e personaggi (maga, guerriero, avventuriero, pellegrino) | fatto (40 in tutto) |
-| Viaggi verso Kho e Kebir, con incontri e pirati: in taverna compaiono a caso (1 volta su 3) come offerta 3 al posto della Carovana | fatto |
+| Viaggi verso Kho e Kebir e scorta del pellegrino: in taverna ne compare uno alla volta (1 volta su 3) come offerta 3, al posto della Carovana | fatto |
+| Tempio di LYSS: atrio con i riti della dea e le missioni della sacerdotessa (Calice, reliquie del santo, strega del Lago di Lava) | fatto |
+| Spade magiche con nome: Lama di Fiamma (+50), Spada del Vento (+75), Spada dei Re (+100) | fatto |
 | Kho: Tempio di LYSS (purificazione, benedizione dell'arma, offerte) e Guaritore | fatto |
 | Kebir: Arena dei campioni (duello a premio) e Mercato delle spezie | fatto |
 | Maledizioni di Vampiro e Licantropo registrate e curabili; l'arma benedetta le respinge | fatto |

@@ -51,6 +51,7 @@ void Ui::endFrame() {
     click_ = false;
     key_ = 0;
     mouseMoved_ = false;
+    wheel_ = 0;
 }
 
 void Ui::handleEvent(const SDL_Event& e) {
@@ -61,6 +62,7 @@ void Ui::handleEvent(const SDL_Event& e) {
             if (e.button.button == SDL_BUTTON_LEFT) { if (down_) click_ = true; down_ = false; mx_ = e.button.x; my_ = e.button.y; }
             break;
         case SDL_EVENT_KEY_DOWN: key_ = e.key.key; break;
+        case SDL_EVENT_MOUSE_WHEEL: wheel_ += e.wheel.y > 0 ? 1 : e.wheel.y < 0 ? -1 : 0; break;
     }
 }
 

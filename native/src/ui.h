@@ -42,6 +42,7 @@ public:
     bool backPressed() const { return key_ == SDLK_ESCAPE; }
     bool anyInput() const { return click_ || key_ != 0; }
     void resetFocus() { focus_ = 0; }
+    int wheel() const { return wheel_; }    // scatti della rotellina in questo fotogramma (+ su, - giu')
 
 private:
     SDL_Texture* font_ = nullptr;
@@ -52,5 +53,6 @@ private:
     int optDir_ = 0;
     std::string hint_;
     bool mouseMoved_ = false;
+    int wheel_ = 0;
     int nextWidget(float x, float y, float w, float h, bool enabled, bool& hot, bool& focused);
 };

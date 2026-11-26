@@ -106,6 +106,7 @@ struct App {
 
     // salvataggi
     std::vector<SaveInfo> saves;
+    int saveScroll = 0;          // primo salvataggio mostrato negli elenchi
     int confirmDelete = -1;
 
     // operazioni

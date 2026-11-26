@@ -4,6 +4,7 @@
 #include "screen.h"
 #include "vm.h"
 #include <cctype>
+#include <cstdlib>
 #include <cmath>
 #include <cstring>
 #include <sstream>
@@ -111,26 +112,33 @@ void Panel::build(VM* vm, const Picture* pic, const std::string& subject) {
     std::snprintf(buf, sizeof buf, "De%3d  Fr%3d", num("DE"), num("FR")); text(2, 22, buf, 15);
     std::snprintf(buf, sizeof buf, "Fa%3d  At%3d%%", num("FA"), num("AT")); text(2, 23, buf, 15);
     int rf = num("RF"), ro = num("RO");
-    std::snprintf(buf, sizeof buf, "Ro %2d/%-2d", rf, ro); text(2, 25, buf, 1);
+    std::snprintf(buf, sizeof buf, "Ro %2d/%-2d", rf, ro); text(2, 24, buf, 1);
     // barra della robustezza
     int bar = ro > 0 ? (rf * 12 + ro / 2) / ro : 0;
     if (bar < 0) bar = 0;
     if (bar > 12) bar = 12;
     int bc = rf * 3 <= ro ? 2 : rf * 3 <= ro * 2 ? 7 : 5;
-    for (int i = 0; i < 12; i++) { chars[26 * W + 3 + i] = i < bar ? 0xA0 : 0x66; colors[26 * W + 3 + i] = (uint8_t)(i < bar ? bc : 11); }
-    std::snprintf(buf, sizeof buf, "#%-7d  S.%2d", num("DN"), num("TK")); text(2, 27, buf, 7);
+    for (int i = 0; i < 12; i++) { chars[25 * W + 3 + i] = i < bar ? 0xA0 : 0x66; colors[25 * W + 3 + i] = (uint8_t)(i < bar ? bc : 11); }
+    std::snprintf(buf, sizeof buf, "#%-7d  S.%2d", num("DN"), num("TK")); text(2, 26, buf, 7);
     // equipaggiamento della mod (se presente)
     std::string arma, armat;
     bool blessed = vm->varNumber("UK", v) && v == 1;
-    if (vm->varString("UA$", arma) && !arma.empty()) text(2, 28, asciiOf(arma).substr(0, 14), blessed ? 14 : 3);
-    else if (blessed) text(2, 28, "arma benedetta", 14);
-    if (vm->varString("UR$", armat) && !armat.empty()) text(2, 29, asciiOf(armat).substr(0, 14), 3);
-    // consumabili: Filtro magico (oggetti che iniziano per F, come nel gioco) e Pane elfico
+    // oggetti: Filtri magici (iniziano per F, come nel gioco) e Spada magica (S, "+NN")
     std::vector<std::string> os;
-    int filtri = 0, wx = num("WX");
+    int filtri = 0, spada = 0, wx = num("WX");
     if (vm->arrayStrings("OS$", os))
-        for (int i = 1; i <= wx && i < (int)os.size(); i++)
-            if (!os[i].empty() && ((uint8_t)os[i][0] == 0xC6 || os[i][0] == 'F')) filtri++;
+        for (int i = 1; i <= wx && i < (int)os.size(); i++) {
+            if (os[i].empty()) continue;
+            uint8_t c0 = (uint8_t)os[i][0];
+            if (c0 == 0xC6 || c0 == 'F') filtri++;
+            if (c0 == 0xD3 || c0 == 'S') { size_t p = os[i].find('+'); if (p != std::string::npos) spada = std::atoi(os[i].c_str() + p + 1); }
+        }
+    const char* sname = spada == 50 ? "Lama di Fiamma" : spada == 75 ? "Spada del Vento" : spada == 100 ? "Spada dei Re" : spada ? "Spada Magica" : "";
+    int row = 27;
+    if (*sname) text(2, row++, sname, blessed ? 14 : 7);
+    if (vm->varString("UA$", arma) && !arma.empty()) text(2, row++, asciiOf(arma).substr(0, 14), blessed && !*sname ? 14 : 3);
+    if (blessed && row == 27) text(2, row++, "arma benedetta", 14);
+    if (vm->varString("UR$", armat) && !armat.empty() && row < 30) text(2, row++, asciiOf(armat).substr(0, 14), 3);
     items[0].count = filtri; items[0].key = 0x85; items[0].keyName = "F1"; items[0].name = "Filtro magico";
     items[1].count = vm->varNumber("UP", v) ? (int)v : 0; items[1].key = 0x86; items[1].keyName = "F3"; items[1].name = "Pane elfico";
     for (int i = 0; i < 2; i++) {

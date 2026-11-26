@@ -8,7 +8,7 @@
 8701 PRINT "{down}{yel}Si dice che lo custodisca uno spettro:":PRINT "servira' un'arma benedetta.{wht}"
 8702 PRINT "{down}{rvon}* 1 *{rvof} accetto la missione":PRINT "{down}{rvon}* 2 *{rvof} non ora"
 8705 GOSUB 2760:IF N>2 THEN PRINT "{up}{up}":GOTO 8705
-8706 IF N=2 THEN 7720
+8706 IF N=2 THEN 9000
 ' --- discesa nelle catacombe
 8710 TK=TK+1:POKE 56832,3:MP$="catacombe":POKE 56834,1:PRINT "{clr}Raggiungi la Citta' Morta e scendi":PRINT "nelle catacombe con una torcia...":GOSUB 50
 ' --- prima stanza: la trappola
