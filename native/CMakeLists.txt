@@ -21,6 +21,7 @@ add_executable(avventura1 WIN32
   src/choices.cpp
   src/sid.cpp
   src/music.cpp
+  src/panel.cpp
 )
 target_include_directories(avventura1 PRIVATE src)
 target_link_libraries(avventura1 PRIVATE SDL3::SDL3-static)

@@ -1,6 +1,7 @@
 // Stato condiviso dell'applicazione (launcher + gioco).
 #pragma once
 #include "choices.h"
+#include "panel.h"
 #include "screen.h"
 #include "tap.h"
 #include "ui.h"
@@ -20,6 +21,7 @@ struct Config {
     int musicVol = 7;           // 0-10
     int sfxVol = 8;             // 0-10
     std::string tapPath;        // ultimo .tap fornito (solo informativo)
+    std::string mod;            // file della mod scelta ("" = originale)
 };
 
 struct SpeedDef { const char* name; double mult; };
@@ -39,6 +41,7 @@ struct GameHost : VMHost {
     void tapeReadRequest(const std::string& name) override;
     void lineInputRequest() override;
     void onEnd(const std::string& reason) override;
+    void ioWrite(int reg, int value) override;
 };
 
 struct App {
@@ -76,6 +79,18 @@ struct App {
     std::string endReason;       // fine partita in attesa di conferma
     double endAt = -1;           // istante di fine partita (per ignorare tasti premuti un attimo prima)
     std::string musicScene;      // brano richiesto dalla partita ("" = predefinito)
+
+    // mod (cartella mods\ accanto all'eseguibile)
+    std::vector<std::string> modFiles, modNames;   // indice 0 = gioco originale
+    int modSel = 0;
+    void scanMods();
+    // pannello laterale dell'Espansione
+    bool panelOn = false;
+    std::vector<Picture> pictures;
+    const Picture* pic = nullptr;
+    std::string subject;
+    Panel panel;
+    SDL_Texture* panelTex = nullptr;
     std::string toast;
     double toastUntil = 0;
     double budgetCarry = 0;

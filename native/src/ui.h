@@ -16,7 +16,7 @@ enum Align { LEFT, CENTER, RIGHT };
 
 class Ui {
 public:
-    static const int W = 1152, H = 816;
+    static const int W = 1600, H = 816;      // schermo C64 x3 (1152) + pannello laterale
     SDL_Renderer* r = nullptr;
 
     bool init(SDL_Renderer* renderer);

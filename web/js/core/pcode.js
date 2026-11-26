@@ -278,8 +278,9 @@
       }
     };
     lines.forEach(l => { fix(l.stmts); l.stmts = mergeSeq(l.stmts); });
-    for (const l of lines) delete l.a;
-    return { lines, data: P.data };
+    const lineAddr = new Map();
+    for (const l of lines) { lineAddr.set(l.n, l.a); delete l.a; }
+    return { lines, data: P.data, lineAddr, vars: P.vars, arrays: P.arrays, hdr: P.hdr };
   }
 
   /** ricompone PRINT, PRINT#, INPUT#, NEXT multipli a partire dalle istruzioni elementari */

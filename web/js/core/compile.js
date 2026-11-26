@@ -31,7 +31,10 @@
     return [e + 128, b1, Math.floor(mant / 65536) & 255, Math.floor(mant / 256) & 255, mant & 255];
   }
 
-  function compile(prog, runtime) {
+  /** env (facoltativo) = compilazione di un MODULO di mod:
+   *   { base, varIndex(name), arrInfo(name, nd), lineAddr(n) }  -> ritorna { code, base }
+   */
+  function compile(prog, runtime, env = null) {
     const code = [];                 // P-code principale (byte), indirizzi relativi
     const fixAbs = [];               // { at, line } salti assoluti da risolvere
     const fixRel = [];               // { at, from, line:'next' } IF -> riga successiva
@@ -43,10 +46,12 @@
     const b = (...xs) => { for (const x of xs) code.push(x & 0xFF); };
 
     const varIndex = name => {
+      if (env) return env.varIndex(name);
       if (!vars.has(name)) vars.set(name, vars.size);
       return vars.get(name);
     };
     const arrInfo = (name, nd) => {
+      if (env) { const a = env.arrInfo(name, nd); if (a.nd !== nd) err(`numero di indici errato per ${name}`); return a; }
       if (!arrays.has(name)) arrays.set(name, { n: LAYOUT.ARRAY_BASE + arrays.size, nd, explicit: false });
       const a = arrays.get(name);
       if (a.nd !== nd) err(`numero di indici errato per ${name}`);
@@ -202,7 +207,7 @@
     }
 
     // --- codice principale
-    b(0x15);                                         // CLR iniziale
+    if (!env) b(0x15);                               // CLR iniziale
     const lines = prog.lines;
     lines.forEach((l, k) => {
       curLine = l.n;
@@ -218,6 +223,20 @@
       }
     });
     curLine = undefined;
+    if (env) {
+      b(0x4F);                                       // sicurezza: fine del modulo
+      if (prog.data && prog.data.length) throw new CompileError('DATA non supportato nei moduli di mod');
+      for (const f of fixAbs) {
+        let a;
+        if (lineOff.has(f.line)) a = env.base + lineOff.get(f.line);
+        else a = env.lineAddr(f.line);
+        if (a === undefined) throw new CompileError(`riga ${f.line} inesistente (ne' nella mod ne' nel gioco)`);
+        code[f.at] = a >> 8; code[f.at + 1] = a & 255;
+      }
+      const lines = new Map();
+      for (const [n, off] of lineOff) lines.set(n, env.base + off);
+      return { code: Uint8Array.from(code), base: env.base, lines };
+    }
     b(0x4F, 0x00);                                   // END + terminatore
 
     // --- init: array fittizio che riserva gli slot + DIM impliciti

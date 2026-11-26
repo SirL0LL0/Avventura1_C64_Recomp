@@ -87,39 +87,96 @@ VM::VM(const std::vector<uint8_t>& mem, Screen& scr, VMHost& host) : mem_(mem), 
     for (int a = vartab; a + 7 <= arytab; a += 7) varNames_.push_back(nameOf(m(a), m(a + 1)));
     vars_.resize(varNames_.size());
     // pre-scansione dei DIM per conoscere il numero di indici di ogni array
-    auto scan = [&](int from, int to) {
-        for (int a = from; a < to;) {
-            uint8_t b = m(a);
-            int len = 1;
-            if (b >= 0x80) {
-                int lo = b & 0x3F;
-                if (b == 0xE7) len = 2 + m(a + 1);
-                else if (b >= 0xE8 && b <= 0xEF) len = 1 + (b & 7);
-                else if (b >= 0xF0 || b == 0xE6) len = 1;
-                else if (lo < 0x20) len = 1;
-                else if (lo <= 0x22) len = 2;
-                else if (lo == 0x23) len = 3;
-                else if (lo == 0x24) len = 2;
-                else if (lo == 0x25) len = 3;
-                else if (lo == 0x26) len = 2;
-                else if (lo == 0x27) len = 3;
-                else if (lo == 0x28 || lo == 0x29) len = 6;
-            } else switch (b) {
-                case 0x10: { int slot = m(a + 4) << 8 | m(a + 5); if (slot) arrayNd_[(slot - 1) / 2] = m(a + 1); len = 6; break; }
-                case 0x18: len = 2; break;
-                case 0x19: case 0x1A: case 0x38: len = 3; break;
-                case 0x1B: case 0x1C: len = m(a + 1); break;
-                case 0x1F: case 0x5D: case 0x5E: case 0x5F: case 0x60: len = 2; break;
-                case 0x37: len = m(a + 5); break;
-                case 0x00: return;
-            }
-            a += len < 1 ? 1 : len;
-        }
-    };
-    scan(initPC_, datPtr_);
-    scan(startPC_, vartab - 1);
+    scanCode(initPC_, datPtr_);
+    scanCode(startPC_, vartab - 1);
+    vartabEnd_ = arytab;
     pc_ = startPC_;
     startMs_ = nowMs();
+}
+
+// ------------------------------------------------------------------ mod
+uint32_t gameFingerprint(const std::vector<uint8_t>& mem, int end) {
+    uint32_t h = 0x811C9DC5u;
+    for (int a = 0x0801; a < end; a++) { h ^= mem[a]; h *= 0x01000193u; }
+    return h;
+}
+
+bool parseMod(const std::string& text, ModInfo& m, std::string& err) {
+    std::istringstream is(text);
+    std::string line;
+    bool header = false;
+    while (std::getline(is, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        size_t sp = line.find(' ');
+        std::string k = line.substr(0, sp), v = sp == std::string::npos ? "" : line.substr(sp + 1);
+        if (k == "AVVMOD") { header = v == "1"; continue; }
+        if (k == "name") m.name = v;
+        else if (k == "game") m.game = (uint32_t)std::strtoul(v.c_str(), nullptr, 16);
+        else if (k == "base") m.base = std::atoi(v.c_str());
+        else if (k == "var") m.vars.push_back(v);
+        else if (k == "hook") {
+            std::istringstream hs(v);
+            ModHook h; std::string kind;
+            hs >> h.at >> kind >> h.target;
+            h.gosub = kind == "gosub";
+            m.hooks.push_back(h);
+        } else if (k == "code") {
+            for (size_t i = 0; i + 1 < v.size(); i += 2) m.code.push_back((uint8_t)std::strtoul(v.substr(i, 2).c_str(), nullptr, 16));
+        }
+    }
+    if (!header) { err = "File di mod non valido"; return false; }
+    if (m.base < 0x0801 || m.base + (int)m.code.size() > 0xFFF0) { err = "Mod fuori dalla memoria disponibile"; return false; }
+    return true;
+}
+
+bool VM::loadMod(const ModInfo& md, std::string& err) {
+    if (md.base < vartabEnd_) { err = "La mod si sovrappone al gioco"; return false; }
+    std::memcpy(&mem_[md.base], md.code.data(), md.code.size());
+    for (auto& v : md.vars) { varNames_.push_back(v); Value z; z.isStr = !v.empty() && v.back() == '$'; vars_.push_back(z); }
+    hooks_ = md.hooks;
+    hookAt_.assign(0x10000, -1);
+    for (size_t i = 0; i < hooks_.size(); i++) hookAt_[hooks_[i].at & 0xFFFF] = (int)i;
+    scanCode(md.base, md.base + (int)md.code.size());
+    return true;
+}
+
+bool VM::varString(const std::string& name, std::string& out) const {
+    for (size_t i = 0; i < varNames_.size(); i++) if (varNames_[i] == name) { out = vars_[i].s; return true; }
+    return false;
+}
+bool VM::varNumber(const std::string& name, double& out) const {
+    for (size_t i = 0; i < varNames_.size(); i++) if (varNames_[i] == name) { out = vars_[i].n; return true; }
+    return false;
+}
+
+void VM::scanCode(int from, int to) {
+    for (int a = from; a < to;) {
+        uint8_t b = m(a);
+        int len = 1;
+        if (b >= 0x80) {
+            int lo = b & 0x3F;
+            if (b == 0xE7) len = 2 + m(a + 1);
+            else if (b >= 0xE8 && b <= 0xEF) len = 1 + (b & 7);
+            else if (b >= 0xF0 || b == 0xE6) len = 1;
+            else if (lo < 0x20) len = 1;
+            else if (lo <= 0x22) len = 2;
+            else if (lo == 0x23) len = 3;
+            else if (lo == 0x24) len = 2;
+            else if (lo == 0x25) len = 3;
+            else if (lo == 0x26) len = 2;
+            else if (lo == 0x27) len = 3;
+            else if (lo == 0x28 || lo == 0x29) len = 6;
+        } else switch (b) {
+            case 0x10: { int slot = m(a + 4) << 8 | m(a + 5); if (slot) arrayNd_[(slot - 1) / 2] = m(a + 1); len = 6; break; }
+            case 0x18: len = 2; break;
+            case 0x19: case 0x1A: case 0x38: len = 3; break;
+            case 0x1B: case 0x1C: len = m(a + 1); break;
+            case 0x1F: case 0x5D: case 0x5E: case 0x5F: case 0x60: len = 2; break;
+            case 0x37: len = m(a + 5); break;
+            case 0x00: return;
+        }
+        a += len < 1 ? 1 : len;
+    }
 }
 
 void VM::fail(const char* code) { throw VMError{code}; }
@@ -195,6 +252,7 @@ int VM::peek(int a) {
     if (a == 646) return scr_.color;
     if (a == 197) return keys_.empty() ? 64 : 0;
     if (a == 198) return (int)keys_.size();
+    if (a >= 56832 && a < 57088) return host_.ioRead(a - 56832) & 0xFF;
     if (a >= 1024 && a < 2024) return scr_.chars[a - 1024];
     if (a >= 55296 && a < 56296) return scr_.colors[a - 55296] | 0xF0;
     auto it = pokes_.find(a);
@@ -206,6 +264,7 @@ void VM::poke(int a, int v) {
     if (a == 53281) { scr_.bg = v & 15; return; }
     if (a == 646) { scr_.color = v & 15; return; }
     if (a == 198) { if (v == 0) keys_.clear(); return; }
+    if (a >= 56832 && a < 57088) { host_.ioWrite(a - 56832, v); return; }   // registri di espansione $DE00
     if (a >= 1024 && a < 2024) { scr_.chars[a - 1024] = (uint8_t)v; return; }
     if (a >= 55296 && a < 56296) { scr_.colors[a - 55296] = v & 15; return; }
     pokes_[a] = (uint8_t)v;
@@ -360,6 +419,23 @@ void VM::lineProvide(const std::string& line) {
 }
 
 void VM::step() {
+    // agganci della mod alle righe originali
+    if (!hookAt_.empty()) {
+        int h = hookAt_[pc_ & 0xFFFF];
+        if (h >= 0) {
+            if (pc_ == skipHook_) skipHook_ = -1;
+            else {
+                const ModHook& hk = hooks_[h];
+                if (hk.gosub) {
+                    if (ctl_.size() > 200) fail("OUT OF MEMORY");
+                    Frame f; f.kind = 1; f.ret = pc_; f.hook = true; ctl_.push_back(f);
+                }
+                pc_ = hk.target;
+                cost_ += 0.25;
+                return;
+            }
+        }
+    }
     const int a = pc_;
     const uint8_t b = m(a);
     cost_ += 0.25;
@@ -510,7 +586,9 @@ void VM::step() {
         case 0x1D: {
             while (!ctl_.empty() && ctl_.back().kind != 1) ctl_.pop_back();
             if (ctl_.empty()) fail("RETURN WITHOUT GOSUB");
-            pc_ = ctl_.back().ret; ctl_.pop_back();
+            pc_ = ctl_.back().ret;
+            if (ctl_.back().hook) skipHook_ = pc_;      // torna alla riga agganciata senza riattivare l'aggancio
+            ctl_.pop_back();
             return;
         }
         case 0x1E: data_ = datPtr_; pc_++; return;

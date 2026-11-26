@@ -123,7 +123,7 @@ void Ui::background(double t) {
         fill(x, y, sz, sz, Color{v, v, (uint8_t)std::fmin(255, v + 20), (uint8_t)(255 * b)});
     }
     // luna
-    float lx = 1010, ly = 300;
+    float lx = W - 250.0f, ly = 150;
     for (int rr = 70; rr > 0; rr -= 6) fill(lx - rr, ly - rr, rr * 2, rr * 2, Color{255, 240, 200, 6});
     for (int yy = -34; yy <= 34; yy += 2) {
         float hw = std::sqrt(34.0f * 34 - yy * yy);

@@ -13,6 +13,7 @@ struct Host : VMHost {
     void tapeWrite(const std::string& n, const std::string& d) override { savedName = n; saved = d; }
     void tapeReadRequest(const std::string&) override { pending = true; }
     void onEnd(const std::string& r) override { std::printf("FINE: %s\n", r.c_str()); }
+    void ioWrite(int reg, int v) override { std::printf("IO $DE%02X <- %d\n", reg, v); }
     bool pending = false;
 };
 
@@ -24,6 +25,15 @@ int main(int argc, char** argv) {
     if (!loadGameFromTap(tap, g, err)) { std::printf("ERRORE: %s\n", err.c_str()); return 1; }
     Screen scr; Host host;
     VM vm(g.mem, scr, host);
+    int argStart = 2;
+    if (argc > 3 && std::string(argv[2]) == "--mod") {
+        std::ifstream mf(argv[3]);
+        std::string txt((std::istreambuf_iterator<char>(mf)), {});
+        ModInfo md;
+        if (!parseMod(txt, md, err) || md.game != gameFingerprint(g.mem, g.end) || !vm.loadMod(md, err)) { std::printf("MOD: %s\n", err.empty() ? "impronta del gioco diversa" : err.c_str()); return 1; }
+        std::printf("mod caricata: %s (%zu byte, %zu agganci)\n", md.name.c_str(), md.code.size(), md.hooks.size());
+        argStart = 4;
+    }
     host.vm = &vm;
     auto runFor = [&](double u) {
         for (double left = u; left > 0 && vm.state() != VM::HALT; left -= 500) {
@@ -32,7 +42,7 @@ int main(int argc, char** argv) {
         }
     };
     runFor(20000);
-    for (int i = 2; i < argc; i++) {
+    for (int i = argStart; i < argc; i++) {
         std::string k = argv[i];
         uint8_t c = k == "SPACE" ? 32 : k == "ENTER" ? 13 : k == "F1" ? 133 : (uint8_t)k[0];
         vm.pushKey(c);

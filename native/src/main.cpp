@@ -53,6 +53,7 @@ void App::loadConfig() {
         else if (k == "integer_scale") cfg.integerScale = n != 0;
         else if (k == "hints") cfg.hints = n != 0;
         else if (k == "tap") cfg.tapPath = val;
+        else if (k == "mod") cfg.mod = val;
         else if (k == "music") cfg.musicVol = std::clamp(n, 0, 10);
         else if (k == "sfx") cfg.sfxVol = std::clamp(n, 0, 10);
     }
@@ -60,8 +61,8 @@ void App::loadConfig() {
 
 void App::saveConfig() {
     char buf[1200];
-    int n = std::snprintf(buf, sizeof buf, "speed=%d\ncrt=%d\nfullscreen=%d\ninteger_scale=%d\nhints=%d\nmusic=%d\nsfx=%d\ntap=%s\n",
-                          cfg.speed, cfg.crt, cfg.fullscreen, cfg.integerScale, cfg.hints, cfg.musicVol, cfg.sfxVol, cfg.tapPath.c_str());
+    int n = std::snprintf(buf, sizeof buf, "speed=%d\ncrt=%d\nfullscreen=%d\ninteger_scale=%d\nhints=%d\nmusic=%d\nsfx=%d\nmod=%s\ntap=%s\n",
+                          cfg.speed, cfg.crt, cfg.fullscreen, cfg.integerScale, cfg.hints, cfg.musicVol, cfg.sfxVol, cfg.mod.c_str(), cfg.tapPath.c_str());
     writeFile(pref + "config.ini", buf, n);
 }
 
@@ -125,10 +126,39 @@ void App::refreshSaves() {
     std::sort(saves.begin(), saves.end(), [](const SaveInfo& a, const SaveInfo& b) { return a.mtime > b.mtime; });
 }
 
+void App::scanMods() {
+    modFiles.assign(1, ""); modNames.assign(1, "Originale");
+    const char* b = SDL_GetBasePath();
+    std::string dir = std::string(b ? b : "./") + "mods/";
+    int n = 0;
+    char** list = SDL_GlobDirectory(dir.c_str(), "*.avm", 0, &n);
+    for (int i = 0; list && i < n; i++) {
+        auto v = readFile(dir + list[i]);
+        std::string txt(v.begin(), v.end()), name = list[i];
+        size_t p = txt.find("\nname ");
+        if (p != std::string::npos) name = txt.substr(p + 6, txt.find('\n', p + 1) - p - 6);
+        modFiles.push_back(dir + list[i]);
+        modNames.push_back(name);
+    }
+    SDL_free(list);
+    modSel = 0;
+    for (size_t i = 1; i < modFiles.size(); i++) if (!cfg.mod.empty() && modFiles[i].find(cfg.mod) != std::string::npos) modSel = (int)i;
+}
+
 void App::startGame() {
     c64 = std::make_unique<Screen>();
     host.app = this;
     vm = std::make_unique<VM>(game.mem, *c64, host);
+    panelOn = false; pic = nullptr; subject.clear(); musicScene.clear();
+    if (modSel > 0) {
+        auto v = readFile(modFiles[modSel]);
+        ModInfo md; std::string err;
+        std::string txt(v.begin(), v.end());
+        if (!parseMod(txt, md, err)) { status = err; statusError = true; vm.reset(); c64.reset(); return; }
+        if (md.game != gameFingerprint(game.mem, game.end)) { status = "La mod non e' compatibile con questa copia del gioco"; statusError = true; vm.reset(); c64.reset(); return; }
+        if (!vm->loadMod(md, err)) { status = err; statusError = true; vm.reset(); c64.reset(); return; }
+        panelOn = true;
+    }
     paused = tapePick = lineInput = false;
     endReason.clear();
     endAt = -1;
@@ -172,6 +202,20 @@ void GameHost::tapeReadRequest(const std::string&) {
 void GameHost::lineInputRequest() { app->lineInput = true; app->lineBuf.clear(); }
 
 void GameHost::onEnd(const std::string& reason) { app->endReason = reason; }
+
+// registri di espansione: 0 musica, 1 effetto, 2 immagine (soggetto in MP$)
+void GameHost::ioWrite(int reg, int v) {
+    static const char* SONG[] = {"", "titolo", "taverna", "viaggio", "battaglia", "citta", "tempio", "eroe", "morte"};
+    static const char* SFX[] = {"", "colpo", "ferita", "mancato", "moneta", "pozione", "livello", "clic", "magia", "porta"};
+    if (reg == 0) app->musicScene = v >= 0 && v < 9 ? SONG[v] : "";
+    else if (reg == 1) { if (v > 0 && v < 10) g_music.sfx(SFX[v]); }
+    else if (reg == 2) {
+        std::string s;
+        if (v == 0 || !app->vm || !app->vm->varString("MP$", s)) { app->pic = nullptr; app->subject.clear(); return; }
+        app->subject = asciiFromPetscii(s);
+        app->pic = findPicture(app->pictures, app->subject);
+    }
+}
 
 // ------------------------------------------------------------------ input di gioco
 static void gameText(App& a, const char* utf8) {
@@ -223,14 +267,16 @@ static void gameKey(App& a, SDL_Keycode k, SDL_Keymod mod) {
 }
 
 // ------------------------------------------------------------------ scelte cliccabili
+static const float C64W = 1152;   // schermo C64 (384x272) x3
+static float g_gx = 0;            // ascissa dello schermo C64 (centrato senza pannello)
 // cella C64 -> coordinate logiche (bordo 32x36 pixel, scala 3)
 static SDL_FRect choiceRect(const Choice& c) {
     if (c.pad) {
         const float bw = 72, gap = 12, total = 9 * bw + 8 * gap;
-        return SDL_FRect{(Ui::W - total) / 2 + c.x0 * (bw + gap), 712, bw, 56};
+        return SDL_FRect{g_gx + (C64W - total) / 2 + c.x0 * (bw + gap), 712, bw, 56};
     }
     const float s = 3, cw = 8 * s;
-    return SDL_FRect{(Screen::BORDER_X * s) + c.x0 * cw, (Screen::BORDER_Y * s) + c.y0 * cw,
+    return SDL_FRect{g_gx + (Screen::BORDER_X * s) + c.x0 * cw, (Screen::BORDER_Y * s) + c.y0 * cw,
                      (c.x1 - c.x0 + 1) * cw, (c.y1 - c.y0 + 1) * cw};
 }
 
@@ -259,6 +305,7 @@ static bool choiceEvent(App& a, const SDL_Event& e) {
 // ------------------------------------------------------------------ disegno partita
 static void drawGame(App& a, double dt) {
     Ui& u = a.ui;
+    g_gx = a.panelOn ? 0.0f : (Ui::W - C64W) / 2;
     // esecuzione della VM
     if (!a.paused && !a.tapePick && a.endReason.empty() && a.vm && a.vm->state() == VM::RUN) {
         double mult = SPEEDS[a.cfg.speed].mult;
@@ -273,11 +320,21 @@ static void drawGame(App& a, double dt) {
         a.c64->render((uint32_t*)px, pitch / 4, a.lineInput, SDL_GetTicks());
         SDL_UnlockTexture(a.c64tex);
     }
-    SDL_FRect dst{0, 0, (float)Ui::W, (float)Ui::H};
+    SDL_FRect dst{g_gx, 0, C64W, (float)Ui::H};
     SDL_RenderTexture(a.ren, a.c64tex, nullptr, &dst);
     if (a.cfg.crt) {
-        for (int y = 2; y < Ui::H; y += 3) u.fill(0, (float)y, Ui::W, 1, Color{0, 0, 0, 80});
-        u.frame(0, 0, Ui::W, Ui::H, Color{0, 0, 0, 90}, 10);
+        for (int y = 2; y < Ui::H; y += 3) u.fill(g_gx, (float)y, C64W, 1, Color{0, 0, 0, 80});
+        u.frame(g_gx, 0, C64W, Ui::H, Color{0, 0, 0, 90}, 10);
+    }
+    // pannello laterale PETSCII dell'Espansione
+    if (a.panelOn) {
+        a.panel.build(a.vm.get(), a.pic, a.subject);
+        void* pp; int pitch2;
+        if (SDL_LockTexture(a.panelTex, nullptr, &pp, &pitch2)) { a.panel.render((uint32_t*)pp, pitch2 / 4); SDL_UnlockTexture(a.panelTex); }
+        SDL_FRect pd{C64W + 8, 0, Panel::W * 24.0f, Panel::H * 24.0f};
+        u.fill(C64W, 0, Ui::W - C64W, Ui::H, Color{0, 0, 0});
+        SDL_RenderTexture(a.ren, a.panelTex, nullptr, &pd);
+        if (a.cfg.crt) for (int y = 2; y < Ui::H; y += 3) u.fill(C64W, (float)y, Ui::W - C64W, 1, Color{0, 0, 0, 80});
     }
     // scelte cliccabili: riconosciute solo mentre il gioco aspetta un tasto
     if (a.vm && a.vm->waitingKey() && !a.paused && !a.tapePick && !a.lineInput && a.endReason.empty()) a.choices = detectChoices(*a.c64);
@@ -311,11 +368,11 @@ static void drawGame(App& a, double dt) {
     if (wantHand != a.handShown) { SDL_SetCursor(wantHand ? a.cursorHand : a.cursorArrow); a.handShown = wantHand; }
     // fine partita: la schermata finale resta visibile finche' il giocatore non decide di uscire
     if (finished) {
-        float pw = 760, ph = 120, px = (Ui::W - pw) / 2, py = Ui::H - ph - 24;
+        float pw = 760, ph = 120, px = g_gx + (C64W - pw) / 2, py = Ui::H - ph - 24;
         u.panel(px, py, pw, ph);
-        u.text(Ui::W / 2, py + 26, "FINE DELL'AVVENTURA", 3, pal::gold, CENTER);
+        u.text(g_gx + C64W / 2, py + 26, "FINE DELL'AVVENTURA", 3, pal::gold, CENTER);
         float blink = 0.6f + 0.4f * (float)std::sin(a.time * 4.0);
-        u.text(Ui::W / 2, py + 72, "Clicca o premi un tasto per tornare al menu", 2, Color{238, 226, 196, (uint8_t)(255 * blink)}, CENTER, false);
+        u.text(g_gx + C64W / 2, py + 72, "Clicca o premi un tasto per tornare al menu", 2, Color{238, 226, 196, (uint8_t)(255 * blink)}, CENTER, false);
         if (a.time - a.endAt > 0.5 && u.anyInput()) {
             a.stopGame();
             a.status = "Partita terminata. Alla prossima avventura!";
@@ -324,20 +381,20 @@ static void drawGame(App& a, double dt) {
         return;
     }
     if (a.cfg.hints && !a.paused) {
-        u.fill(0, Ui::H - 34, Ui::W, 34, Color{0, 0, 0, 120});
+        u.fill(g_gx, Ui::H - 34, C64W, 34, Color{0, 0, 0, 120});
         const std::string hint = "Clic o tasti per scegliere - Frecce+Invio - F1 bevi - Esc menu";
         const char* sp = SPEEDS[a.cfg.speed].name;
-        float avail = Ui::W - 32 - u.textWidth(sp, 2) - 24, sc = 2;
+        float avail = C64W - 32 - u.textWidth(sp, 2) - 24, sc = 2;
         while (sc > 1 && u.textWidth(hint, sc) > avail) sc -= 0.125f;
-        u.text(16, Ui::H - 17 - 4 * sc, hint, sc, Color{230, 230, 240, 220}, LEFT, false);
-        u.text(Ui::W - 16, Ui::H - 25, sp, 2, pal::gold, RIGHT, false);
+        u.text(g_gx + 16, Ui::H - 17 - 4 * sc, hint, sc, Color{230, 230, 240, 220}, LEFT, false);
+        u.text(g_gx + C64W - 16, Ui::H - 25, sp, 2, pal::gold, RIGHT, false);
     }
     if (a.time < a.toastUntil) {
         float w = u.textWidth(a.toast, 2.5f) + 60;
-        float x = (Ui::W - w) / 2;
+        float x = g_gx + (C64W - w) / 2;
         u.fill(x, 20, w, 56, Color{20, 16, 40, 235});
         u.frame(x, 20, w, 56, pal::gold, 2);
-        u.text(Ui::W / 2, 38, a.toast, 2.5f, pal::parchment, CENTER);
+        u.text(g_gx + C64W / 2, 38, a.toast, 2.5f, pal::parchment, CENTER);
     }
     // dialogo: scelta del nastro da caricare
     if (a.tapePick) {
@@ -491,6 +548,10 @@ int main(int argc, char** argv) {
     a.c64tex = SDL_CreateTexture(a.ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, Screen::PIX_W, Screen::PIX_H);
     SDL_SetTextureScaleMode(a.c64tex, SDL_SCALEMODE_NEAREST);
     a.ui.init(a.ren);
+    loadPictures(a.pictures);
+    a.panelTex = SDL_CreateTexture(a.ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, Panel::W * 8, Panel::H * 8);
+    SDL_SetTextureScaleMode(a.panelTex, SDL_SCALEMODE_NEAREST);
+    a.scanMods();
     a.cursorHand = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_POINTER);
     a.cursorArrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_DEFAULT);
     a.applyVideo();
@@ -543,7 +604,7 @@ int main(int argc, char** argv) {
             if (frame == 30) { saveShot(a, shotDir + "/1_menu.bmp"); a.screen = Screen_::OPTIONS; }
             if (frame == 40) { saveShot(a, shotDir + "/2_opzioni.bmp"); a.screen = Screen_::ABOUT; }
             if (frame == 50) { saveShot(a, shotDir + "/2b_info.bmp"); a.screen = Screen_::SAVES; a.refreshSaves(); }
-            if (frame == 60) { saveShot(a, shotDir + "/2c_salvataggi.bmp"); a.screen = Screen_::MAIN; if (a.haveGame) a.startGame(); }
+            if (frame == 60) { saveShot(a, shotDir + "/2c_salvataggi.bmp"); a.screen = Screen_::MAIN; if (a.modNames.size() > 1) a.modSel = 1; if (a.haveGame) a.startGame(); }
             if (frame == 300 && a.vm) a.vm->pushKey(' ');
             if (frame == 410 && !a.choices.empty()) {           // mouse sulla seconda scelta
                 SDL_FRect rc = choiceRect(a.choices[a.choices.size() > 1 ? 1 : 0]);
@@ -560,9 +621,11 @@ int main(int argc, char** argv) {
                 a.gmx = rc.x + rc.w / 2; a.gmy = rc.y + rc.h / 2;
             }
             if (frame == 560) saveShot(a, shotDir + "/4_gioco.bmp");
-            if (frame == 570) { a.paused = true; }
-            if (frame == 580) { saveShot(a, shotDir + "/5_pausa.bmp"); a.paused = false; a.endReason = "reset"; }
-            if (frame == 600) { saveShot(a, shotDir + "/6_fine.bmp"); a.running = false; }
+            if (frame == 565 && a.vm) a.vm->pushKey('1');
+            if (frame == 700) saveShot(a, shotDir + "/4b_taverna.bmp");
+            if (frame == 705) { a.paused = true; }
+            if (frame == 715) { saveShot(a, shotDir + "/5_pausa.bmp"); a.paused = false; a.endReason = "reset"; }
+            if (frame == 735) { saveShot(a, shotDir + "/6_fine.bmp"); a.running = false; }
         }
         SDL_RenderPresent(a.ren);
     }
