@@ -19,7 +19,7 @@ I numeri di riga sono quelli del listato decompilato.
 | Musica e immagini di scena in tutto il gioco originale | fatto |
 | Armi comuni, armature (contano nel duello e nella mischia), Pane elfico (F3), Armaiolo | fatto |
 | Salvataggi estesi e compatibili con quelli vecchi | fatto |
-| Ritratti per gruppi di nemici, imboscate e personaggi (maga, guerriero, avventuriero, pellegrino) | fatto (41 in tutto) |
+| Ritratti per gruppi di nemici, imboscate e personaggi (maga, guerriero, avventuriero, pellegrino) | fatto (40 in tutto) |
 | Viaggi dalla taverna (opzione 6) verso Kho e Kebir, con incontri e pirati | fatto |
 | Kho: Tempio di LYSS (purificazione, benedizione dell'arma, offerte) e Guaritore | fatto |
 | Kebir: Arena dei campioni (duello a premio) e Mercato delle spezie | fatto |
