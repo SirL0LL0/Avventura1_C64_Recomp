@@ -3,6 +3,7 @@
 #include "tap.h"
 #include "vm.h"
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -44,6 +45,7 @@ int main(int argc, char** argv) {
     runFor(20000);
     for (int i = argStart; i < argc; i++) {
         std::string k = argv[i];
+        if (k.rfind("--set", 0) == 0 && i + 1 < argc) { std::string kv = argv[++i]; auto eq = kv.find('='); vm.setNumber(kv.substr(0, eq), std::atof(kv.c_str() + eq + 1)); continue; }
         uint8_t c = k == "SPACE" ? 32 : k == "ENTER" ? 13 : k == "F1" ? 133 : (uint8_t)k[0];
         vm.pushKey(c);
         runFor(20000);

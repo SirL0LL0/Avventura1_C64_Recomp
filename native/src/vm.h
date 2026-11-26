@@ -63,6 +63,7 @@ public:
     // lettura di variabili per nome (pannello, registri)
     bool varString(const std::string& name, std::string& out) const;
     bool varNumber(const std::string& name, double& out) const;
+    bool setNumber(const std::string& name, double v);   // solo per i test
     static std::string fmtNumber(double v);
     static double val(const std::string& s);
 

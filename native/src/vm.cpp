@@ -149,6 +149,11 @@ bool VM::varNumber(const std::string& name, double& out) const {
     return false;
 }
 
+bool VM::setNumber(const std::string& name, double v) {
+    for (size_t i = 0; i < varNames_.size(); i++) if (varNames_[i] == name) { vars_[i].n = v; return true; }
+    return false;
+}
+
 void VM::scanCode(int from, int to) {
     for (int a = from; a < to;) {
         uint8_t b = m(a);

@@ -8,6 +8,44 @@ I numeri di riga sono quelli del listato decompilato.
 
 ---
 
+## 0. Stato del lavoro (branch `mod/espansione`, solo PC)
+
+| Parte | Stato |
+|-------|-------|
+| Audio: due SID emulati (6 voci in stereo), player, 8 brani originali, effetti sonori | fatto |
+| Sistema di mod: modulo P-code separato, agganci alle righe originali, registri `$DE00` | fatto |
+| Pannello PETSCII con ritratto, didascalia e scheda del personaggio | fatto |
+| Ritratti: 8 mostri delle cacce, taverna, carovana, Babbakesch, Armaiolo, Spada, Filtro, morte, Eroe | fatto (16) |
+| Musica e immagini di scena in tutto il gioco originale | fatto |
+| Armi comuni, armature (contano nel duello e nella mischia), Pane elfico (F3), Armaiolo | fatto |
+| Salvataggi estesi e compatibili con quelli vecchi | fatto |
+| Ritratti per gruppi di nemici, imboscate, personaggi e committenti | da fare |
+| Missioni nuove (pellegrino, catacombe, Conte Movas), mostri nuovi (Basilisco, Idra, Spettri) | da fare |
+| Città nuove: Kebir (Arena, spezie, pirati) e Kho (Tempio di LYSS, guaritore) | da fare |
+
+### Compilare e provare la mod
+
+```powershell
+node tools\avv.js mod "originali\<tuo>.tap" mods\espansione mods\espansione.avm
+Copy-Item mods\espansione.avm build\native\mods\
+.\build\native\vmtest.exe "originali\<tuo>.tap" --mod mods\espansione.avm SPACE 2 1 --set DN=20000 SPACE SPACE 3 2 SPACE SPACE 4 6
+```
+
+Nel launcher, il pulsante **VERSIONE** passa da "Originale" alle mod trovate nella cartella `mods\` accanto all'eseguibile.
+
+### Registri di espansione (`POKE 56832+n`)
+
+| Indirizzo | Uso |
+|-----------|-----|
+| 56832 | musica: 1 titolo, 2 taverna, 3 viaggio, 4 battaglia, 5 città, 6 tempio, 7 eroe, 8 morte |
+| 56833 | effetto: 1 colpo, 2 ferita, 3 mancato, 4 moneta, 5 pozione, 6 livello, 7 clic, 8 magia, 9 porta |
+| 56834 | immagine: 1 mostra il soggetto scritto in `MP$` (per esempio `MP$=LA$`), 0 nasconde |
+
+Le immagini si scelgono per parola chiave contenuta nel nome. I ritratti sono in `native/src/art.h`:
+pixel art 32×32 con un colore per blocco 2×2. La musica è in `native/src/songs.h`.
+
+---
+
 ## 1. Come funziona il gioco
 
 ### Personaggio
