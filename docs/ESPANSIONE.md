@@ -15,13 +15,17 @@ I numeri di riga sono quelli del listato decompilato.
 | Audio: due SID emulati (6 voci in stereo), player, 8 brani originali, effetti sonori | fatto |
 | Sistema di mod: modulo P-code separato, agganci alle righe originali, registri `$DE00` | fatto |
 | Pannello PETSCII con ritratto, didascalia e scheda del personaggio | fatto |
-| Ritratti: 8 mostri delle cacce, taverna, carovana, Babbakesch, Armaiolo, Spada, Filtro, morte, Eroe | fatto (16) |
+| Ritratti: mostri delle cacce (11), taverna, carovana, Babbakesch, Armaiolo, Spada, Filtro, morte, Eroe, Tempio, Kho, Kebir, Arena | fatto (23) |
 | Musica e immagini di scena in tutto il gioco originale | fatto |
 | Armi comuni, armature (contano nel duello e nella mischia), Pane elfico (F3), Armaiolo | fatto |
 | Salvataggi estesi e compatibili con quelli vecchi | fatto |
 | Ritratti per gruppi di nemici, imboscate, personaggi e committenti | da fare |
-| Missioni nuove (pellegrino, catacombe, Conte Movas), mostri nuovi (Basilisco, Idra, Spettri) | da fare |
-| Città nuove: Kebir (Arena, spezie, pirati) e Kho (Tempio di LYSS, guaritore) | da fare |
+| Viaggi dalla taverna (opzione 6) verso Kho e Kebir, con incontri e pirati | fatto |
+| Kho: Tempio di LYSS (purificazione, benedizione dell'arma, offerte) e Guaritore | fatto |
+| Kebir: Arena dei campioni (duello a premio) e Mercato delle spezie | fatto |
+| Maledizioni di Vampiro e Licantropo registrate e curabili; l'arma benedetta le respinge | fatto |
+| Mostri nuovi nelle cacce: Basilisco, Idra delle paludi, Spettro del Re | fatto |
+| Missioni nuove (pellegrino, catacombe, Conte Movas) | da fare |
 
 ### Compilare e provare la mod
 
@@ -30,6 +34,8 @@ node tools\avv.js mod "originali\<tuo>.tap" mods\espansione mods\espansione.avm
 Copy-Item mods\espansione.avm build\native\mods\
 .\build\native\vmtest.exe "originali\<tuo>.tap" --mod mods\espansione.avm SPACE 2 1 --set DN=20000 SPACE SPACE 3 2 SPACE SPACE 4 6
 ```
+
+Per test ripetibili: `set AVV_SEED=1` (il generatore casuale della VM parte sempre uguale).
 
 Nel launcher, il pulsante **VERSIONE** passa da "Originale" alle mod trovate nella cartella `mods\` accanto all'eseguibile.
 

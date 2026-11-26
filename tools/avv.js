@@ -111,6 +111,12 @@ function buildMod(tapPath, dir, outPath) {
       src += raw + '\n';
     }
   }
+  // le righe possono stare in qualsiasi ordine e in piu' file: si ordinano per numero
+  const numbered = src.split('\n').filter(l => l.trim()).map(l => ({ n: parseInt(l, 10), l }));
+  for (const x of numbered) if (isNaN(x.n)) throw new Error(`riga senza numero: ${x.l.slice(0, 40)}`);
+  numbered.sort((p, q) => p.n - q.n);
+  for (let i = 1; i < numbered.length; i++) if (numbered[i].n === numbered[i - 1].n) throw new Error(`riga ${numbered[i].n} definita due volte`);
+  src = numbered.map(x => x.l).join('\n') + '\n';
   const prog = AV.basic.parse(src);
   for (const l of prog.lines) if (ast.lineAddr.has(l.n)) throw new Error(`la riga ${l.n} esiste gia' nel gioco: usa le righe libere (4670-5990, 6150+)`);
   const origVar = new Map(ast.vars.map((n, i) => [n, i]));

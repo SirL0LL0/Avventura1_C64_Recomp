@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <random>
 #include <stdexcept>
@@ -31,7 +32,11 @@ double cbmFloat(const uint8_t* f) {
     return (f[1] & 0x80) ? -v : v;
 }
 
-std::mt19937& rng() { static std::mt19937 r{std::random_device{}()}; return r; }
+// AVV_SEED=n rende ripetibili le partite (test)
+std::mt19937& rng() {
+    static std::mt19937 r{std::getenv("AVV_SEED") ? (unsigned)std::atoi(std::getenv("AVV_SEED")) : std::random_device{}()};
+    return r;
+}
 
 } // namespace
 

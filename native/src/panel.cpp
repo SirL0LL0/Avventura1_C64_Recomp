@@ -173,6 +173,7 @@ void Panel::build(VM* vm, const Picture* pic, const std::string& subject) {
     std::snprintf(buf, sizeof buf, "#%-7d  S.%2d", num("DN"), num("TK")); text(2, 29, buf, 7);
     // equipaggiamento della mod (se presente)
     std::string arma, armat;
+    if (vm->varNumber("UK", v) && v == 1) text(2, 30, "arma benedetta", 14);
     if (vm->varString("UA$", arma) && !arma.empty()) text(2, 31, asciiOf(arma).substr(0, 14), 3);
     if (vm->varString("UR$", armat) && !armat.empty()) text(2, 32, asciiOf(armat).substr(0, 14), 3);
 }
