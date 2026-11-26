@@ -25,7 +25,9 @@ I numeri di riga sono quelli del listato decompilato.
 | Kebir: Arena dei campioni (duello a premio) e Mercato delle spezie | fatto |
 | Maledizioni di Vampiro e Licantropo registrate e curabili; l'arma benedetta le respinge | fatto |
 | Mostri nuovi nelle cacce: Basilisco, Idra delle paludi, Spettro del Re | fatto |
-| Missioni nuove (pellegrino, catacombe, Conte Movas) | da fare |
+| Missione: il Calice di LYSS (dal Tempio di Kho; trappola, enigma, Spettro guardiano) | fatto |
+| Salvataggi MOD2: anche arma benedetta, maledizioni e missioni (legge MOD1 e originali) | fatto |
+| Altre missioni (scorta del pellegrino, catena del Conte Movas) | da fare |
 
 ### Compilare e provare la mod
 

@@ -26,9 +26,9 @@
 7720 POKE 56832,6:MP$="tempio":POKE 56834,1:PRINT "{clr}Il {rvon}TEMPIO DI LYSS{rvof}":PRINT "{down}Una sacerdotessa velata ti accoglie tra":PRINT "colonne d'avorio e lampade d'oro."
 7722 PRINT "{down}{rvon}* 1 *{rvof} Purificazione (£ 600 a punto)":PRINT "    ridona Forza e Destrezza perdute"
 7723 PRINT "{rvon}* 2 *{rvof} Benedizione dell'arma (£ 1500)":PRINT "    ripara dalle maledizioni e ferisce":PRINT "    i non-morti"
-7724 PRINT "{rvon}* 3 *{rvof} Offerta alla dea (£ 1000, +1 Fa)":PRINT "{rvon}* 4 *{rvof} uscire dal Tempio"
-7725 GOSUB 2760:IF N>4 THEN PRINT "{up}{up}":GOTO 7725
-7726 ON N GOTO 7730,7740,7750,7700
+7724 PRINT "{rvon}* 3 *{rvof} Offerta alla dea (£ 1000, +1 Fa)":PRINT "{rvon}* 4 *{rvof} uscire dal Tempio":IF MQ=0 THEN PRINT "{rvon}{yel}* 5 *{rvof}{wht} La missione della sacerdotessa"
+7725 GOSUB 2760:IF N>5 OR (N=5 AND MQ=1) THEN PRINT "{up}{up}":GOTO 7725
+7726 ON N GOTO 7730,7740,7750,7700,8700
 7730 MX=MF+MD:IF MX=0 THEN PRINT "{down}Non c'e' nulla da purificare in te.":GOTO 7758
 7731 MC=600*MX:IF DN<MC THEN PRINT "{down}Servono £";MC;"{left}: non ne hai abbastanza.":GOTO 7758
 7732 DN=DN-MC:FO=FO+MF:AT=AT+5*MF:DE=DE+MD:MF=0:MD=0:POKE 56833,8:PRINT "{down}{lgrn}La luce della dea ti avvolge:":PRINT "hai ritrovato le forze perdute !{wht}":GOSUB 160:GOTO 7758
