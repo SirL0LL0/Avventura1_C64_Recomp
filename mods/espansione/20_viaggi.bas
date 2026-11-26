@@ -67,9 +67,9 @@
 7660 GOSUB 160:GOSUB 230:PRINT "{clr}":GOTO 7800
 ' --- Kebir
 7800 POKE 56832,5:MP$="kebir":POKE 56834,1:PRINT "{clr}{yel}KEBIR{wht}, la citta' del Sultano":PRINT "{down}Minareti bianchi, vele colorate e il":PRINT "frastuono del gran mercato del porto."
-7805 PRINT "{down}{rvon}* 1 *{rvof} l'Arena dei campioni":PRINT "{down}{rvon}* 2 *{rvof} il Mercato delle spezie":PRINT "{down}{rvon}* 3 *{rvof} rivedere il personaggio":PRINT "{down}{rvon}* 4 *{rvof} tornare a casa (nave £ 400)"
-7810 GOSUB 2760:IF N>4 THEN PRINT "{up}{up}":GOTO 7810
-7815 ON N GOTO 7820,7860,7890,7895
+7805 PRINT "{down}{rvon}* 1 *{rvof} l'Arena dei campioni":PRINT "{down}{rvon}* 2 *{rvof} il Mercato delle spezie":PRINT "{down}{rvon}{yel}* 3 *{rvof}{wht} il banditore del Sultano":PRINT "{down}{rvon}* 4 *{rvof} rivedere il personaggio":PRINT "{down}{rvon}* 5 *{rvof} tornare a casa (nave £ 400)"
+7810 GOSUB 2760:IF N>5 THEN PRINT "{up}{up}":GOTO 7810
+7815 ON N GOTO 7820,7860,9100,7890,7895
 ' --- l'Arena: duello contro il Campione del Sultano
 7820 POKE 56832,4:MP$="arena":POKE 56834,1:PRINT "{clr}L'{rvon}ARENA DEI CAMPIONI{rvof}":PRINT "{down}Il pubblico urla mentre entri nella":PRINT "sabbia. Il Campione del Sultano ti":PRINT "aspetta con la scimitarra in pugno."
 7821 MW=500+INT(AT*4):PRINT "{down}Premio per la vittoria: £";MW

@@ -272,6 +272,7 @@ function bust(o = {}) {
   }
   if (o.horns) { L.curve([[cx - hw, hy - 16], [cx - hw - 20, hy - 18], [cx - hw - 14, hy - 40]], 4, o.horns, 1); L.curve([[cx + hw, hy - 16], [cx + hw + 20, hy - 18], [cx + hw + 14, hy - 40]], 4, o.horns, 1); }
   if (o.crown) { L.poly([[cx - 18, hy - 18], [cx + 18, hy - 18], [cx + 19, hy - 32], [cx + 10, hy - 24], [cx, hy - 36], [cx - 10, hy - 24], [cx - 19, hy - 32]], [9, 8, 7, 1], { k: 0.9 }); L.ell(cx, hy - 22, 2, 2, [2, 10, 1]); L.set(cx - 19, hy - 33, 1); L.set(cx + 19, hy - 33, 1); L.set(cx, hy - 37, 1); }
+  if (o.turban) { L.ell(cx, hy - 16, hw + 6, 14, o.turban, { add: 0.15 }); for (let k = -2; k <= 2; k++) L.curve([[cx - hw - 4, hy - 12 + k * 4], [cx, hy - 20 + k * 4], [cx + hw + 4, hy - 12 + k * 4]], 0.5, o.turban[0]); L.ell(cx, hy - 12, 4, 5, [2, 10, 1], { add: 0.3 }); L.cap(cx + 2, hy - 16, cx + 6, hy - 34, 1.5, [8, 7, 1]); }
   if (o.circlet) { L.curve([[cx - hw - 1, hy - 10], [cx, hy - 16], [cx + hw + 1, hy - 10]], 0.8, 7); L.ell(cx, hy - 14, 2.2, 2.2, o.circlet); }
   return L;
 }

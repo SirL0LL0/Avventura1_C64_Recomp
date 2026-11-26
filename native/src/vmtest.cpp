@@ -46,6 +46,21 @@ int main(int argc, char** argv) {
     for (int i = argStart; i < argc; i++) {
         std::string k = argv[i];
         if (k.rfind("--set", 0) == 0 && i + 1 < argc) { std::string kv = argv[++i]; auto eq = kv.find('='); vm.setNumber(kv.substr(0, eq), std::atof(kv.c_str() + eq + 1)); continue; }
+        // --get VAR: stampa il valore in quel punto della sequenza
+        if (k == "--get" && i + 1 < argc) { double v = 0; std::string n = argv[++i]; std::printf("%s=%s\n", n.c_str(), vm.varNumber(n, v) ? VM::fmtNumber(v).c_str() : "?"); continue; }
+        // --until VAR=VAL TASTO: preme TASTO finche' VAR vale VAL (al massimo 400 volte)
+        if (k == "--until" && i + 2 < argc) {
+            std::string kv = argv[++i], key = argv[++i];
+            auto eq = kv.find('=');
+            double want = std::atof(kv.c_str() + eq + 1), v = 0;
+            int n = 0;
+            for (; n < 400 && vm.state() != VM::HALT && !(vm.varNumber(kv.substr(0, eq), v) && v == want); n++) {
+                vm.pushKey(key == "SPACE" ? 32 : (uint8_t)key[0]);
+                runFor(20000);
+            }
+            std::printf("until %s: %d tasti%s\n", kv.c_str(), n, n >= 400 ? " (NON raggiunto)" : "");
+            continue;
+        }
         uint8_t c = k == "SPACE" ? 32 : k == "ENTER" ? 13 : k == "F1" ? 133 : (uint8_t)k[0];
         vm.pushKey(c);
         runFor(20000);

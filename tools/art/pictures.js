@@ -657,6 +657,41 @@ pic("pergamena", "pergamena", "La pergamena sacra", () => {
 
 pic("strega", "strega", "La strega del Lago", scene((img) => { P.sky(img, "fire", 128); for (let y = 96; y < 128; y += 4) for (let x = (y * 3) % 9; x < S; x += 14) img.rect(x, y, x + 6, y, 8); },
   { cloth: [0, 0, 4], hood: [0, 0, 4], skin: [0, 11, 5, 13], glow: 7, angry: true, fangs: true, bigNose: true, hair: [0, 0, 11], weapon: "staff", jaw: 16, mouth: 0, amulet: true }));
+// ------------------------------------------------------------------ Kebir: il Sultano e i suoi nemici
+const bazaar = (img) => { P.sky(img, "dusk", 70); img.vgrad(70, 127, [9, 8, 7], 0, 127, true); for (const [x, c] of [[0, R.red], [44, R.blue], [88, R.green]]) img.poly([[x, 40], [x + 40, 40], [x + 44, 70], [x - 4, 70]], c, { k: 0.8 }); for (const x of [20, 64, 108]) img.ell(x, 40, 20, 6, [9, 8, 7]); };
+pic("banditore", "banditore,sultano", "Il banditore", scene(bazaar, { cloth: [0, 6, 14, 3], collar: 7, skin: [9, 8, 10], turban: [12, 15, 1, 1], beard: "short", hair: [0, 0, 11], eyes: 9, amulet: true }));
+pic("mummia", "mummia,mummie", "Le Mummie", () => {
+  const img = new Img(S, S);
+  P.stoneWall(img, 0, 127, [0, 9, 8, 7], 10, 18); P.torch(img, 14, 40); P.torch(img, 114, 40);
+  const L = P.bust({ skin: [11, 12, 15], glow: 2, mouth: 0, bare: true, crown: true, jaw: 18 });
+  for (let y = 20; y < S; y += 5) for (let x = 0; x < S; x++) { const yy = y + Math.round(Math.sin(x * 0.2 + y) * 1.5); if (L.get(x, yy) >= 0 && L.get(x, yy) !== 2 && L.get(x, yy) !== 7) L.set(x, yy, 11); }
+  img.put(L, 0, 0, 0);
+  return img;
+});
+pic("djinn", "djinn", "Il Djinn delle sabbie", () => {
+  const img = new Img(S, S);
+  P.sky(img, "night", 128); img.ell(64, 128, 70, 30, [0, 6, 14]);
+  const L = P.bust({ skin: [0, 6, 14, 3], bare: true, turban: [9, 8, 7, 1], glow: 7, angry: true, beard: "long", hair: [6, 14, 3], ears: "pointed", jaw: 21 });
+  for (let y = 100; y < S; y++) for (let x = 0; x < S; x++) if (L.get(x, y) >= 0 && Math.abs(x - 64) > 30 + (y - 100) * 0.3) L.p[y * S + x] = -1;
+  img.put(L, 0, -8, 0);
+  img.speck(20, 90, 108, 127, 3, 0.05, 4).speck(20, 90, 108, 127, 1, 0.02, 7);
+  return img;
+});
+pic("scorpione", "scorpione", "Lo Scorpione gigante", () => {
+  const img = new Img(S, S);
+  P.sky(img, "day", 80); P.sun(img, 104, 20, 10); img.vgrad(80, 127, [12, 15, 1], 0, 127, true);
+  const L = new Img(S, S), sk = [0, 9, 2, 8];
+  for (const s of [-1, 1]) for (let i = 0; i < 4; i++) { const x = 64 + s * (14 + i * 4); L.cap(x, 92, x + s * 16, 82 + i * 4, 2.5, sk); L.cap(x + s * 16, 82 + i * 4, x + s * 22, 118, 2, sk, 1.2); }
+  L.ell(64, 96, 22, 13, sk, { add: 0.1 });
+  for (let k = 0; k < 4; k++) L.line(46 + k * 2, 90 + k * 3, 82 - k * 2, 90 + k * 3, 0);
+  L.cap(44, 92, 22, 74, 4, sk); L.ell(18, 68, 9, 6, sk); L.poly([[10, 62], [6, 54], [18, 62]], sk);
+  L.cap(84, 92, 106, 74, 4, sk); L.ell(110, 68, 9, 6, sk); L.poly([[118, 62], [122, 54], [110, 62]], sk);
+  L.curve([[64, 86], [60, 50], [80, 30]], 6, sk, 4); L.curve([[80, 30], [96, 26], [92, 44]], 4, sk, 2);
+  L.poly([[92, 44], [96, 54], [88, 48]], [11, 12, 15]);
+  L.set(58, 88, 7); L.set(70, 88, 7);
+  img.put(L, 0, 0, 0);
+  return img;
+});
 // ------------------------------------------------------------------ icone (16x16)
 pic("icona_filtro", "", "Filtro magico", () => {
   const L = new Img(16, 16);
