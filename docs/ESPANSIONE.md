@@ -14,7 +14,7 @@ I numeri di riga sono quelli del listato decompilato.
 |-------|-------|
 | Audio: due SID emulati (6 voci in stereo), player, 8 brani originali, effetti sonori | fatto |
 | Sistema di mod: modulo P-code separato, agganci alle righe originali, registri `$DE00` | fatto |
-| Pannello PETSCII con ritratto, didascalia e scheda del personaggio | fatto |
+| Pannello con illustrazione, didascalia, scheda del personaggio e icone cliccabili dei consumabili | fatto |
 | Ritratti: mostri delle cacce (11), luoghi, negozi, oggetti, morte, Eroe | fatto |
 | Musica e immagini di scena in tutto il gioco originale | fatto |
 | Armi comuni, armature (contano nel duello e nella mischia), Pane elfico (F3), Armaiolo | fatto |
@@ -50,8 +50,7 @@ Nel launcher, il pulsante **VERSIONE** passa da "Originale" alle mod trovate nel
 | 56833 | effetto: 1 colpo, 2 ferita, 3 mancato, 4 moneta, 5 pozione, 6 livello, 7 clic, 8 magia, 9 porta |
 | 56834 | immagine: 1 mostra il soggetto scritto in `MP$` (per esempio `MP$=LA$`), 0 nasconde |
 
-Le immagini si scelgono per parola chiave contenuta nel nome. I ritratti sono in `native/src/art.h`:
-pixel art 32×32 con un colore per blocco 2×2. La musica è in `native/src/songs.h`.
+Le immagini si scelgono per parola chiave contenuta nel nome. Le illustrazioni (128×128, tavolozza del C64, con ombreggiature retinate) sono disegnate da codice in `tools/art/` (`pictures.js`, `parts.js`, `engine.js`). `node tools/art/build.js anteprima.png` rigenera `native/src/art_data.h` e un foglio d'anteprima. Ci sono anche le icone dei consumabili: nella scheda il Filtro (F1) e il Pane elfico (F3) si usano con un clic quando il gioco aspetta il loro tasto. La musica è in `native/src/songs.h`.
 
 ---
 

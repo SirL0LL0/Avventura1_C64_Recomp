@@ -1,5 +1,5 @@
 #include "panel.h"
-#include "art.h"
+#include "art_data.h"
 #include "font_data.h"
 #include "screen.h"
 #include "vm.h"
@@ -9,76 +9,24 @@
 #include <sstream>
 
 namespace {
-
-// colori della pixel art: lettera -> colore C64
-int colorOf(char c) {
-    switch (c) {
-        case 'k': return 0; case 'w': return 1; case 'r': return 2; case 'c': return 3;
-        case 'p': return 4; case 'g': return 5; case 'b': return 6; case 'y': return 7;
-        case 'o': return 8; case 'n': return 9; case 'l': return 10; case 'd': return 11;
-        case 'm': return 12; case 'G': return 13; case 'B': return 14; case 'L': return 15;
-    }
-    return -1;   // '.' = sfondo
-}
-
-// maschera 2x2 (TL=8 TR=4 BL=2 BR=1) -> codice schermo (bit 7 = inverso)
-const uint8_t QUAD[16] = {
-    0x20, 0x6C, 0x7B, 0x62, 0x7C, 0xE1, 0xFF, 0xFE,   // 0..7
-    0x7E, 0x7F, 0x61, 0xFC, 0xE2, 0xFB, 0xEC, 0xA0,   // 8..15
-};
-
 std::string lower(std::string s) { for (auto& c : s) c = (char)std::tolower((unsigned char)c); return s; }
-
+int hexDigit(char c) { return c >= 'a' ? c - 'a' + 10 : c - '0'; }
 } // namespace
 
 void loadPictures(std::vector<Picture>& out) {
-    std::istringstream is(ART_TEXT);
-    std::string line;
-    Picture* p = nullptr;
-    std::vector<std::string> rows;
-    auto finish = [&]() {
-        if (!p) return;
-        rows.resize(32, std::string(32, '.'));
-        for (auto& r : rows) r.resize(32, '.');
-        for (int cy = 0; cy < 16; cy++)
-            for (int cx = 0; cx < 16; cx++) {
-                char px[4] = {rows[cy * 2][cx * 2], rows[cy * 2][cx * 2 + 1], rows[cy * 2 + 1][cx * 2], rows[cy * 2 + 1][cx * 2 + 1]};
-                // colore di primo piano = il piu' frequente tra quelli non di sfondo
-                int cnt[16] = {0}, best = -1;
-                for (char c : px) { int k = colorOf(c); if (k >= 0) cnt[k]++; }
-                for (int k = 0; k < 16; k++) if (cnt[k] && (best < 0 || cnt[k] > cnt[best])) best = k;
-                int mask = 0;
-                if (best >= 0) for (int i = 0; i < 4; i++) if (colorOf(px[i]) == best) mask |= 8 >> i;
-                p->chars[cy * 16 + cx] = QUAD[mask];
-                p->colors[cy * 16 + cx] = (uint8_t)(best < 0 ? 1 : best);
-            }
-        p = nullptr;
-    };
-    while (std::getline(is, line)) {
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        if (line.rfind("pic ", 0) == 0) {
-            finish();
-            out.emplace_back();
-            p = &out.back();
-            rows.clear();
-            // pic nome | parole chiave separate da virgole | didascalia | sfondo
-            std::string rest = line.substr(4);
-            std::vector<std::string> f;
-            size_t s = 0, e;
-            while ((e = rest.find('|', s)) != std::string::npos) { f.push_back(rest.substr(s, e - s)); s = e + 1; }
-            f.push_back(rest.substr(s));
-            auto trim = [](std::string x) { while (!x.empty() && x.front() == ' ') x.erase(0, 1); while (!x.empty() && x.back() == ' ') x.pop_back(); return x; };
-            p->name = trim(f[0]);
-            if (f.size() > 1) { std::istringstream ks(f[1]); std::string k; while (std::getline(ks, k, ',')) if (!trim(k).empty()) p->keys.push_back(lower(trim(k))); }
-            p->title = f.size() > 2 ? trim(f[2]) : p->name;
-            p->bg = f.size() > 3 ? colorOf(trim(f[3])[0]) : 0;
-            if (p->bg < 0) p->bg = 0;
-            if (p->keys.empty()) p->keys.push_back(lower(p->name));
-            continue;
-        }
-        if (p && !line.empty() && line.find_first_not_of(".kwrcpgbyonldmGBL") == std::string::npos && rows.size() < 32) rows.push_back(line);
+    for (int i = 0; i < ART_COUNT; i++) {
+        const ArtDef& d = ART_DEFS[i];
+        Picture p;
+        p.name = d.name;
+        p.title = d.title;
+        p.w = d.w; p.h = d.h;
+        p.px.resize((size_t)d.w * d.h);
+        for (size_t k = 0; k < p.px.size() && d.px[k]; k++) p.px[k] = (uint8_t)hexDigit(d.px[k]);
+        std::istringstream ks(d.keys);
+        std::string k;
+        while (std::getline(ks, k, ',')) if (!k.empty()) p.keys.push_back(lower(k));
+        out.push_back(std::move(p));
     }
-    finish();
 }
 
 const Picture* findPicture(const std::vector<Picture>& pics, const std::string& subject) {
@@ -91,6 +39,10 @@ const Picture* findPicture(const std::vector<Picture>& pics, const std::string& 
     return best;
 }
 
+const Picture* pictureByName(const std::vector<Picture>& pics, const std::string& name) {
+    for (auto& p : pics) if (p.name == name) return &p;
+    return nullptr;
+}
 // ------------------------------------------------------------------ pannello
 static uint8_t screenCode(char c) {
     if (c >= 'a' && c <= 'z') return (uint8_t)(c - 'a' + 1);
@@ -132,22 +84,18 @@ static std::string asciiOf(const std::string& pet) {
 
 void Panel::build(VM* vm, const Picture* pic, const std::string& subject) {
     clear(0);
-    // cornice del ritratto
+    pic_ = pic && pic->w == 128 && pic->h == 128 ? pic : nullptr;
+    // cornice dell'illustrazione (l'immagine viene disegnata in render)
     box(0, 0, 17, 17, 12);
-    if (pic) {
-        for (int y = 0; y < 16; y++)
-            for (int x = 0; x < 16; x++) {
-                chars[(y + 1) * W + x + 1] = pic->chars[y * 16 + x];
-                colors[(y + 1) * W + x + 1] = pic->colors[y * 16 + x];
-            }
-    } else {
+    if (!pic_) {
         text(3, 7, "AVVENTURA 1", 11);
         text(4, 9, "ESPANSIONE", 12);
     }
-    std::string cap = pic ? pic->title : "";
-    if (!subject.empty() && pic && pic->title.empty()) cap = asciiOf(subject);
+    std::string cap = pic_ ? pic_->title : "";
+    if (!subject.empty() && pic_ && pic_->title.empty()) cap = asciiOf(subject);
     if (cap.size() > 18) cap = cap.substr(0, 18);
     text((W - (int)cap.size()) / 2, 18, cap, 7);
+    for (auto& it : items) { it.count = 0; it.usable = false; it.px = it.py = 0; }
     if (!vm) return;
     // scheda del personaggio
     std::string np;
@@ -159,23 +107,41 @@ void Panel::build(VM* vm, const Picture* pic, const std::string& subject) {
     text(2, 20, " " + name.substr(0, 13) + " ", 1, true);
     auto num = [&](const char* n) { return vm->varNumber(n, v) ? (int)v : 0; };
     char buf[40];
-    std::snprintf(buf, sizeof buf, "Fo%3d  In%3d", num("FO"), num("IN")); text(2, 22, buf, 15);
-    std::snprintf(buf, sizeof buf, "De%3d  Fr%3d", num("DE"), num("FR")); text(2, 23, buf, 15);
-    std::snprintf(buf, sizeof buf, "Fa%3d  At%3d%%", num("FA"), num("AT")); text(2, 24, buf, 15);
+    std::snprintf(buf, sizeof buf, "Fo%3d  In%3d", num("FO"), num("IN")); text(2, 21, buf, 15);
+    std::snprintf(buf, sizeof buf, "De%3d  Fr%3d", num("DE"), num("FR")); text(2, 22, buf, 15);
+    std::snprintf(buf, sizeof buf, "Fa%3d  At%3d%%", num("FA"), num("AT")); text(2, 23, buf, 15);
     int rf = num("RF"), ro = num("RO");
-    std::snprintf(buf, sizeof buf, "Ro %2d/%-2d", rf, ro); text(2, 26, buf, 1);
+    std::snprintf(buf, sizeof buf, "Ro %2d/%-2d", rf, ro); text(2, 25, buf, 1);
     // barra della robustezza
     int bar = ro > 0 ? (rf * 12 + ro / 2) / ro : 0;
     if (bar < 0) bar = 0;
     if (bar > 12) bar = 12;
     int bc = rf * 3 <= ro ? 2 : rf * 3 <= ro * 2 ? 7 : 5;
-    for (int i = 0; i < 12; i++) { chars[27 * W + 3 + i] = i < bar ? 0xA0 : 0x66; colors[27 * W + 3 + i] = (uint8_t)(i < bar ? bc : 11); }
-    std::snprintf(buf, sizeof buf, "#%-7d  S.%2d", num("DN"), num("TK")); text(2, 29, buf, 7);
+    for (int i = 0; i < 12; i++) { chars[26 * W + 3 + i] = i < bar ? 0xA0 : 0x66; colors[26 * W + 3 + i] = (uint8_t)(i < bar ? bc : 11); }
+    std::snprintf(buf, sizeof buf, "#%-7d  S.%2d", num("DN"), num("TK")); text(2, 27, buf, 7);
     // equipaggiamento della mod (se presente)
     std::string arma, armat;
-    if (vm->varNumber("UK", v) && v == 1) text(2, 30, "arma benedetta", 14);
-    if (vm->varString("UA$", arma) && !arma.empty()) text(2, 31, asciiOf(arma).substr(0, 14), 3);
-    if (vm->varString("UR$", armat) && !armat.empty()) text(2, 32, asciiOf(armat).substr(0, 14), 3);
+    bool blessed = vm->varNumber("UK", v) && v == 1;
+    if (vm->varString("UA$", arma) && !arma.empty()) text(2, 28, asciiOf(arma).substr(0, 14), blessed ? 14 : 3);
+    else if (blessed) text(2, 28, "arma benedetta", 14);
+    if (vm->varString("UR$", armat) && !armat.empty()) text(2, 29, asciiOf(armat).substr(0, 14), 3);
+    // consumabili: Filtro magico (oggetti che iniziano per F, come nel gioco) e Pane elfico
+    std::vector<std::string> os;
+    int filtri = 0, wx = num("WX");
+    if (vm->arrayStrings("OS$", os))
+        for (int i = 1; i <= wx && i < (int)os.size(); i++)
+            if (!os[i].empty() && ((uint8_t)os[i][0] == 0xC6 || os[i][0] == 'F')) filtri++;
+    items[0].count = filtri; items[0].key = 0x85; items[0].keyName = "F1"; items[0].name = "Filtro magico";
+    items[1].count = vm->varNumber("UP", v) ? (int)v : 0; items[1].key = 0x86; items[1].keyName = "F3"; items[1].name = "Pane elfico";
+    for (int i = 0; i < 2; i++) {
+        Consumable& it = items[i];
+        int cx = 2 + i * 8;
+        it.px = cx * 8; it.py = 30 * 8;
+        std::snprintf(buf, sizeof buf, "x%d", it.count);
+        text(cx + 2, 30, buf, it.count ? 1 : 11);
+        text(cx + 2, 31, it.keyName, it.count ? 13 : 11);
+        if (it.count) text(2, 32, "clic per usare", 11);
+    }
 }
 
 void Panel::render(uint32_t* dst, int pitch) const {
@@ -193,4 +159,14 @@ void Panel::render(uint32_t* dst, int pitch) const {
                 for (int xx = 0; xx < 8; xx++) p[xx] = (bits & (0x80 >> xx)) ? fg : bgc;
             }
         }
+    auto blit = [&](const Picture* p, int ox, int oy, bool dim) {
+        for (int y = 0; y < p->h; y++)
+            for (int x = 0; x < p->w; x++) {
+                int c = p->px[y * p->w + x];
+                if (dim && c) c = 11;
+                dst[(oy + y) * pitch + ox + x] = 0xFF000000 | C64_PALETTE[c & 15];
+            }
+    };
+    if (pic_) blit(pic_, 8, 8, false);
+    for (auto& it : items) if (it.icon && it.py > 0) blit(it.icon, it.px, it.py, it.count == 0);
 }

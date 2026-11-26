@@ -280,11 +280,43 @@ static SDL_FRect choiceRect(const Choice& c) {
                      (c.x1 - c.x0 + 1) * cw, (c.y1 - c.y0 + 1) * cw};
 }
 
+// icona di un consumabile nel pannello -> coordinate logiche (pannello a x=C64W+8, scala 3)
+static SDL_FRect itemRect(const Consumable& it) {
+    return SDL_FRect{C64W + 8 + it.px * 3.0f - 6, it.py * 3.0f - 6, 16 * 3 + 12, 16 * 3 + 12};
+}
+static bool inRect(const SDL_FRect& r, float x, float y) { return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h; }
+
+// un consumabile si puo' usare quando il gioco aspetta proprio il suo tasto:
+// il Filtro al messaggio "per bere F1", il Pane a ogni "premi un tasto" (aggancio della mod)
+static void updateItems(App& a) {
+    bool f1 = false, anyKey = false;
+    for (auto& c : a.choices) { if (c.key == 0x85) f1 = true; if (c.key == 0x20) anyKey = true; }
+    double rf = 0, ro = 0;
+    bool hurt = a.vm && a.vm->varNumber("RF", rf) && a.vm->varNumber("RO", ro) && rf < ro;
+    a.panel.items[0].usable = f1 && a.panel.items[0].count > 0;
+    a.panel.items[1].usable = anyKey && !f1 && hurt && a.panel.items[1].count > 0;
+}
+
+// clic su un'icona: la usa (come il tasto funzione) oppure spiega quando si potra' usare
+static bool itemClick(App& a, float x, float y) {
+    if (!a.panelOn) return false;
+    for (auto& it : a.panel.items) {
+        if (!it.py || !inRect(itemRect(it), x, y)) continue;
+        if (it.usable) { g_music.sfx("clic"); a.vm->pushKey(it.key); a.choices.clear(); }
+        else if (it.count == 0) a.showToast(std::string("Non hai nessun ") + it.name);
+        else if (it.key == 0x85) a.showToast("Il Filtro si beve quando sei ferito e appare F1");
+        else a.showToast("Il Pane si mangia da ferito, a 'premi un tasto'");
+        return true;
+    }
+    return false;
+}
+
 // gestione mouse/tastiera delle scelte; ritorna true se l'evento e' stato usato
 static bool choiceEvent(App& a, const SDL_Event& e) {
     if (e.type == SDL_EVENT_MOUSE_MOTION) { a.gmx = e.motion.x; a.gmy = e.motion.y; a.selChoice = -1; return true; }
     if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && e.button.button == SDL_BUTTON_LEFT) {
         a.gmx = e.button.x; a.gmy = e.button.y;
+        if (itemClick(a, a.gmx, a.gmy)) return true;
         for (const Choice& c : a.choices) {
             SDL_FRect rc = choiceRect(c);
             if (a.gmx >= rc.x && a.gmx < rc.x + rc.w && a.gmy >= rc.y && a.gmy < rc.y + rc.h) { a.vm->pushKey(c.key); a.choices.clear(); return true; }
@@ -364,7 +396,23 @@ static void drawGame(App& a, double dt) {
             u.frame(rc.x - 4, rc.y - 4, rc.w + 8, rc.h + 8, Color{246, 200, 92, 70}, 1);
         }
     }
-    bool wantHand = a.hoverChoice >= 0;
+    // icone dei consumabili: evidenziate quando si possono usare
+    bool overItem = false;
+    if (a.panelOn) {
+        updateItems(a);
+        float pulse = 0.5f + 0.5f * (float)std::sin(a.time * 5.0);
+        for (auto& it : a.panel.items) {
+            if (!it.py) continue;
+            SDL_FRect rc = itemRect(it);
+            bool hover = inRect(rc, a.gmx, a.gmy);
+            overItem |= hover;
+            if (it.usable) {
+                u.fill(rc.x, rc.y, rc.w, rc.h, Color{246, 200, 92, (uint8_t)(hover ? 70 : 25 + 30 * pulse)});
+                u.frame(rc.x, rc.y, rc.w, rc.h, pal::gold, hover ? 3 : 2);
+            } else if (hover) u.frame(rc.x, rc.y, rc.w, rc.h, Color{200, 200, 220, 120}, 1);
+        }
+    }
+    bool wantHand = a.hoverChoice >= 0 || overItem;
     if (wantHand != a.handShown) { SDL_SetCursor(wantHand ? a.cursorHand : a.cursorArrow); a.handShown = wantHand; }
     // fine partita: la schermata finale resta visibile finche' il giocatore non decide di uscire
     if (finished) {
@@ -382,7 +430,7 @@ static void drawGame(App& a, double dt) {
     }
     if (a.cfg.hints && !a.paused) {
         u.fill(g_gx, Ui::H - 34, C64W, 34, Color{0, 0, 0, 120});
-        const std::string hint = "Clic o tasti per scegliere - Frecce+Invio - F1 bevi - Esc menu";
+        const std::string hint = "Clic o tasti per scegliere - Frecce+Invio - F1/F3 o clic sulle icone - Esc menu";
         const char* sp = SPEEDS[a.cfg.speed].name;
         float avail = C64W - 32 - u.textWidth(sp, 2) - 24, sc = 2;
         while (sc > 1 && u.textWidth(hint, sc) > avail) sc -= 0.125f;
@@ -549,6 +597,8 @@ int main(int argc, char** argv) {
     SDL_SetTextureScaleMode(a.c64tex, SDL_SCALEMODE_NEAREST);
     a.ui.init(a.ren);
     loadPictures(a.pictures);
+    a.panel.items[0].icon = pictureByName(a.pictures, "icona_filtro");
+    a.panel.items[1].icon = pictureByName(a.pictures, "icona_pane");
     a.panelTex = SDL_CreateTexture(a.ren, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, Panel::W * 8, Panel::H * 8);
     SDL_SetTextureScaleMode(a.panelTex, SDL_SCALEMODE_NEAREST);
     a.scanMods();
@@ -622,6 +672,7 @@ int main(int argc, char** argv) {
             }
             if (frame == 560) saveShot(a, shotDir + "/4_gioco.bmp");
             if (frame == 565 && a.vm) a.vm->pushKey('1');
+            if (frame == 690 && a.vm) { a.vm->setNumber("UP", 2); a.vm->setNumber("RF", 6); }   // ferito, con 2 pani
             if (frame == 700) saveShot(a, shotDir + "/4b_taverna.bmp");
             if (frame == 705) { a.paused = true; }
             if (frame == 715) { saveShot(a, shotDir + "/5_pausa.bmp"); a.paused = false; a.endReason = "reset"; }

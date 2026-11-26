@@ -154,6 +154,16 @@ bool VM::varNumber(const std::string& name, double& out) const {
     return false;
 }
 
+bool VM::arrayStrings(const std::string& name, std::vector<std::string>& out) const {
+    for (auto& kv : arrays_)
+        if (kv.second.name == name && kv.second.isStr) {
+            out.clear();
+            for (auto& v : kv.second.data) out.push_back(v.s);
+            return true;
+        }
+    return false;
+}
+
 bool VM::setNumber(const std::string& name, double v) {
     for (size_t i = 0; i < varNames_.size(); i++) if (varNames_[i] == name) { vars_[i].n = v; return true; }
     return false;
