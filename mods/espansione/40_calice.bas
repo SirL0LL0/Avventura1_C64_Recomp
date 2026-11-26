@@ -4,7 +4,7 @@
 ' enigma (Intelligenza), Spettro guardiano (serve l'arma benedetta).
 '   MQ = 1 missione compiuta
 ' ============================================================================
-8700 MP$="tempio":POKE 56834,1:PRINT "{clr}La sacerdotessa abbassa il velo:":PRINT "{down}'Il Calice di LYSS e' stato rubato e":PRINT "nascosto nelle catacombe della Citta'":PRINT "Morta. Riportalo e la dea ti ricompensera'.'"
+8700 MP$="tempio":POKE 56834,1:PRINT "{clr}La sacerdotessa abbassa il velo:":PRINT "{down}'Il Calice di LYSS e' stato rubato e":PRINT "nascosto nelle catacombe della Citta'":PRINT "Morta: riportalo e sarai ricompensato.'"
 8701 PRINT "{down}{yel}Si dice che lo custodisca uno spettro:":PRINT "servira' un'arma benedetta.{wht}"
 8702 PRINT "{down}{rvon}* 1 *{rvof} accetto la missione":PRINT "{down}{rvon}* 2 *{rvof} non ora"
 8705 GOSUB 2760:IF N>2 THEN PRINT "{up}{up}":GOTO 8705

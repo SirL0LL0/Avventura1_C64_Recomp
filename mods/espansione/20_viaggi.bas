@@ -3,12 +3,16 @@
 '   UK  arma benedetta (protegge dalle maledizioni, ferisce i non-morti)
 '   MF/MD  punti di Forza/Destrezza tolti dalle maledizioni (il Tempio li ridona)
 ' ============================================================================
-!HOOK 640 GOSUB 7600
-!HOOK 660 GOTO 7605
-7600 PRINT "{rvon}{lgrn}* 6 *{rvof}{wht} Viaggiare: Kho e Kebir":RETURN
-7605 IF N=6 THEN 7610
-7606 IF N>5 THEN PRINT "{up}{up}":GOTO 650
-7607 GOTO 670
+'   UV  1 = in taverna l'offerta 3 e' il viaggio (a caso, al posto della Carovana)
+!HOOK 560 GOTO 7590
+!HOOK 680 GOTO 7605
+' --- le offerte della taverna (riga 560 originale, con la terza a sorte)
+7590 UV=0:IF INT(3*RND(0))=0 THEN UV=1
+7591 PRINT "{clr}{up}{rvon}* 1 *{rvof} Un ";LA$;" che":PRINT "vive presso ";LB$:PRINT "terrorizza gli abitanti della regione ;":PRINT "taglia di {rvon}{yel}£";A9;"{left}{wht}{rvof} a chi lo uccidera'.":GOSUB 50:GOSUB 570:IF UV=1 THEN 7595
+7592 PRINT "{down}{rvon}* 3 *{rvof} Sta' per partire la Carovana":PRINT "che tutti i mesi si reca nella favolosa":PRINT "citta' di {rvon}{lgrn}Babbakesch{rvof}{wht} ,dove vengono fab-":PRINT "bricate armi e oggetti magici !":GOSUB 50:GOTO 620
+7595 PRINT "{down}{rvon}{lgrn}* 3 *{rvof}{wht} Una nave e una carovana partono":PRINT "per terre lontane: {lgrn}Kho{wht} nella giungla e":PRINT "{yel}Kebir{wht}, la citta' del Sultano. Si":PRINT "cercano scorte per i pellegrini !":GOSUB 50:GOTO 620
+7605 IF N=3 AND UV=1 THEN 7610
+7606 ON N GOTO 760,1660,850,2090,690
 7610 PRINT "{clr}{yel}Viaggi verso terre lontane{wht}":MP$="carovana":POKE 56834,1
 7611 PRINT "{down}{rvon}* 1 *{rvof} Kho, ai bordi della giungla":PRINT "      2 settimane di cammino":PRINT "{down}{rvon}* 2 *{rvof} Kebir, la citta' del Sultano":PRINT "      2 settimane per mare, nave £ 400":PRINT "{down}{rvon}* 3 *{rvof} Scortare un pellegrino al Tempio":PRINT "      di LYSS a Kho (compenso £ 800)":PRINT "{down}{rvon}* 4 *{rvof} restare in citta'"
 7612 GOSUB 2760:IF N>4 THEN PRINT "{up}{up}":GOTO 7612
@@ -56,9 +60,9 @@
 ' --- per mare verso Kebir
 7650 IF DN<400 THEN PRINT "{clr}Il capitano vuole £ 400 per il viaggio":PRINT "e tu non li hai.":GOSUB 4580:GOTO 490
 7651 DN=DN-400:TK=TK+2:POKE 56832,3:MP$="kebir":POKE 56834,1:PRINT "{clr}Ti imbarchi su una nave mercantile...":GOSUB 50
-7652 IF INT(3*RND(0))>0 THEN PRINT "{down}Il mare e' calmo, il viaggio tranquillo.":GOSUB 50:GOTO 7660
+7652 IF INT(3*RND(0))>0 THEN PRINT "{down}Il mare e' calmo: viaggio tranquillo.":GOSUB 50:GOTO 7660
 7653 PRINT "{down}{rvon}PIRATI delle Isole Nere !{rvof}":PRINT "Una galea nera abborda la nave !":GOSUB 50:GOSUB 2790:NM$=" pirati ":IM$="":GOSUB 4580:PRINT "{clr}":GOSUB 3150
-7654 IF FU=1 THEN PRINT "{down}Ti nascondi nella stiva finche' i pirati":PRINT "se ne vanno.":GOSUB 50
+7654 IF FU=1 THEN PRINT "{down}Ti nascondi nella stiva finche' i":PRINT "pirati se ne vanno.":GOSUB 50
 7660 GOSUB 160:GOSUB 230:PRINT "{clr}":GOTO 7800
 ' --- Kebir
 7800 POKE 56832,5:MP$="kebir":POKE 56834,1:PRINT "{clr}{yel}KEBIR{wht}, la citta' del Sultano":PRINT "{down}Minareti bianchi, vele colorate e il":PRINT "frastuono del gran mercato del porto."

@@ -71,7 +71,8 @@ private:
     VState vs_[6];
     // effetti
     int sfxIdx_ = -1, sfxTick_ = 0;
-    float fadeOut_ = 1.0f;
+    float fadeOut_ = 1.0f;                // volume del brano 0..1 (dissolvenze)
+    float gain_ = 0.0f;                   // volume ammorbidito usato in uscita
     int pendingSong_ = -2;
 };
 

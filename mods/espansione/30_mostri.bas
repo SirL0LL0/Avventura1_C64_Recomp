@@ -14,11 +14,11 @@
 !HOOK 4200 GOSUB 8640
 ' --- sguardo del Vampiro: sostituisce la routine originale
 8500 IF UK=1 THEN PRINT "{down}{lblu}La tua arma benedetta respinge lo":PRINT "sguardo del ";LA$;"{wht}":RETURN
-8501 PRINT "{down}Lo sguardo del ";LA$;" ti prosciuga:":FO=FO-1:AT=AT-5:PA=PA-5:MF=MF+1:PRINT "perdi un punto di Forza (ora";FO;"{left})":IF FO<=0 THEN 2680
+8501 PRINT "{down}Lo sguardo del ";LA$:FO=FO-1:AT=AT-5:PA=PA-5:MF=MF+1:PRINT "ti prosciuga: perdi un punto di Forza":PRINT "(ora";FO;"{left}).":IF FO<=0 THEN 2680
 8502 RETURN
 ' --- urlo del Licantropo: sostituisce la routine originale
 8510 IF UK=1 THEN PRINT "{down}{lblu}La tua arma benedetta ti protegge":PRINT "dall'urlo del ";LA$;"{wht}":RETURN
-8511 PRINT "{down}L'urlo del ";LA$;" ti gela il sangue:":DE=DE-1:HP=HP-5:MD=MD+1:PRINT "perdi un punto di Destrezza (ora";DE;"{left})":IF DE<=0 THEN 2680
+8511 PRINT "{down}L'urlo del ";LA$:DE=DE-1:HP=HP-5:MD=MD+1:PRINT "ti gela il sangue: perdi un punto di":PRINT "Destrezza (ora";DE;"{left}).":IF DE<=0 THEN 2680
 8512 RETURN
 ' --- mostri nuovi nella lista delle cacce (3 volte su 10)
 8600 IF INT(10*RND(0))>2 THEN RETURN

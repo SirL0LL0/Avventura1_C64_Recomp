@@ -1,5 +1,6 @@
 #include "music.h"
 #include "songs.h"
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -162,8 +163,18 @@ std::vector<Song> parseSongs(const char* text) {
                         NoteEvent e{row, s->bar, 60 + root, 1};
                         vt.ev.push_back(e); vt.arps.push_back(iv);
                     } else if (type == "pad") {
+                        // pad : ottava [nota dell'accordo: 0 fondamentale, 1 terza, 2 quinta]
                         int oct = tok.empty() ? 4 : std::atoi(tok[0].c_str());
-                        vt.ev.push_back({row, s->bar, 12 * (oct + 1) + root + iv[1 < iv.size() ? 1 : 0], 0});
+                        size_t k = tok.size() > 1 ? (size_t)std::atoi(tok[1].c_str()) : 1;
+                        if (k >= iv.size()) k = iv.size() - 1;
+                        vt.ev.push_back({row, s->bar, 12 * (oct + 1) + root + iv[k], 0});
+                    } else if (type == "harp") {
+                        // harp : ottava passo  -> accordo spezzato lento (1 3 5 8 5 3 ...)
+                        int oct = tok.empty() ? 4 : std::atoi(tok[0].c_str());
+                        int step = tok.size() > 1 ? std::max(1, std::atoi(tok[1].c_str())) : 1;
+                        int seq[6] = {iv[0], iv[1], iv[2], 12, iv[2], iv[1]};
+                        for (int r = 0, k = 0; r < s->bar; r += step, k++)
+                            vt.ev.push_back({row + r, std::min(step, s->bar - r), 12 * (oct + 1) + root + seq[k % 6], 0});
                     } else if (type == "bass") {
                         std::string pat = tok.empty() ? "R......." : tok[0];
                         int r = row;
@@ -232,7 +243,7 @@ float MusicPlayer::exportWav(const std::string& song, double seconds, const std:
     for (size_t i = 0; i < songs_.size(); i++) if (songs_[i].name == song) idx = (int)i;
     if (idx < 0) return -1;
     startSong(idx);
-    request_ = -2; pendingSong_ = -2; fadeOut_ = 1;
+    request_ = -2; pendingSong_ = -2; fadeOut_ = 1; gain_ = 1;
     int frames = (int)(seconds * RATE);
     std::vector<float> buf(frames * 2);
     render(buf.data(), frames);
@@ -341,11 +352,14 @@ void MusicPlayer::applyNote(int vi, const NoteEvent& e, const Instrument& in, in
 
 void MusicPlayer::tick() {
     int rq = request_.exchange(-2);
-    if (rq != -2) { pendingSong_ = rq; fadeOut_ = cur_ >= 0 ? 0.999f : 0.0f; }
+    if (rq != -2) { pendingSong_ = rq; if (cur_ < 0) fadeOut_ = 0; }
     if (pendingSong_ != -2) {
-        // dissolvenza rapida prima di cambiare brano
-        fadeOut_ -= 0.12f;
-        if (fadeOut_ <= 0) { startSong(pendingSong_); pendingSong_ = -2; fadeOut_ = 1; }
+        // dissolvenza in uscita (circa 1,5 s), poi il nuovo brano entra piano
+        fadeOut_ -= 1.0f / 75;
+        if (fadeOut_ <= 0) { fadeOut_ = 0; startSong(pendingSong_); pendingSong_ = -2; }
+    } else if (fadeOut_ < 1) {
+        fadeOut_ += 1.0f / 125;                      // dissolvenza in entrata (circa 2,5 s)
+        if (fadeOut_ > 1) fadeOut_ = 1;
     }
     int sr = sfxRequest_.exchange(-1);
     if (sr >= 0) { sfxIdx_ = sr; sfxTick_ = 0; }
@@ -394,9 +408,12 @@ void MusicPlayer::render(float* out, int frames) {
     float mv = musicVol_.load(), sv = sfxVol_.load();
     for (int i = 0; i < frames; i++) {
         if (--samplesToTick_ <= 0) { tick(); samplesToTick_ = SAMPLES_PER_TICK; }
-        float a = sid_[0]->sample() * mv * fadeOut_;
+        // guadagno ammorbidito campione per campione (curva quadratica: piu' naturale all'orecchio)
+        gain_ += (fadeOut_ * fadeOut_ - gain_) * 0.0015f;
+        float g = mv * gain_;
+        float a = sid_[0]->sample() * g;
         // il secondo SID porta anche gli effetti sulla voce 3: volume misto
-        float b = sid_[1]->sample() * (sfxIdx_ >= 0 ? (mv * fadeOut_ * 0.6f + sv * 0.4f) : mv * fadeOut_);
+        float b = sid_[1]->sample() * (sfxIdx_ >= 0 ? (g * 0.6f + sv * 0.4f) : g);
         out[2 * i] = (a * 0.75f + b * 0.35f) * 0.9f;
         out[2 * i + 1] = (a * 0.35f + b * 0.75f) * 0.9f;
     }

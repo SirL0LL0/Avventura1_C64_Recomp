@@ -12,7 +12,7 @@
 !HOOK 4420 GOSUB 7530
 !HOOK 4490 GOSUB 7540
 ' --- il bazar: quattro botteghe
-7200 PRINT "{clr}Nel bazar di Babbakesch trovi 4 botteghe:":PRINT "{down}{rvon}* 1 *{rvof} il Fabbro magico":PRINT "{down}{rvon}* 2 *{rvof} l'Alchimista":PRINT "{down}{rvon}* 3 *{rvof} lo Stregone":PRINT "{down}{rvon}{lblu}* 4 *{rvof}{wht} l'Armaiolo{down}":FOR MI=1 TO 20:PRINT "- ";:NEXT
+7200 PRINT "{clr}Nel bazar ci sono 4 botteghe:":PRINT "{down}{rvon}* 1 *{rvof} il Fabbro magico":PRINT "{down}{rvon}* 2 *{rvof} l'Alchimista":PRINT "{down}{rvon}* 3 *{rvof} lo Stregone":PRINT "{down}{rvon}{lblu}* 4 *{rvof}{wht} l'Armaiolo{down}":FOR MI=1 TO 20:PRINT "- ";:NEXT
 7205 PRINT "{down}{rvon}{grn}* 5 *{wht}{rvof} voglio rivedere il personaggio":PRINT "{down}{rvon}{yel}* 6 *{wht}{rvof} ritorno a casa ":MP$="babbakesch":POKE 56834,1
 7210 GOSUB 2760:IF N>6 THEN PRINT "{up}{up}":GOTO 7210
 7220 ON N GOTO 1260,1380,1470,7300,1560,1620
@@ -30,11 +30,11 @@
 7360 MC=4000:MW=2:MA$="Cotta di maglia":GOTO 7395
 7370 MC=9000:MW=3:MA$="Corazza elfica":GOTO 7395
 7380 IF DN<300 THEN 4280
-7385 DN=DN-300:UP=UP+1:POKE 56833,4:PRINT "{down}Hai comprato un Pane elfico (ne hai";UP;"{left})":PRINT "Mangialo con F3 quando ti viene chiesto":PRINT "di premere un tasto.":GOTO 1570
+7385 DN=DN-300:UP=UP+1:POKE 56833,4:PRINT "{down}Pane elfico comprato: ne hai";UP:PRINT "Mangialo con F3 quando ti viene chiesto":PRINT "di premere un tasto.":GOTO 1570
 ' --- acquisto di un'arma: sostituisce quella vecchia
 7390 IF DN<MC THEN 4280
 7391 IF UA$<>"" THEN PRINT "Lasci in cambio il tuo ";UA$;"."
-7392 DN=DN-MC:AT=AT-UB+MW:UB=MW:UA$=MA$:POKE 56833,4:MP$="armaiolo":POKE 56834,1:PRINT "{down}Hai acquistato:{yel} ";UA$:PRINT "{wht}La capacita' di combattimento e' ora{rvon}";AT;"{left}%{rvof}":GOTO 1570
+7392 DN=DN-MC:AT=AT-UB+MW:UB=MW:UA$=MA$:POKE 56833,4:MP$="armaiolo":POKE 56834,1:PRINT "{down}Hai acquistato:{yel} ";UA$:PRINT "{wht}Capacita' di combattimento:{rvon}";AT;"{left}%{rvof}":GOTO 1570
 ' --- acquisto di un'armatura
 7395 IF DN<MC THEN 4280
 7396 IF MW<=UR THEN PRINT "La tua armatura e' gia' buona quanto":PRINT "questa o migliore !":GOTO 1570
@@ -49,7 +49,7 @@
 7412 RETURN
 ' --- F3 al "premi un tasto": mangia un Pane elfico
 7420 IF P$<>"{f3}" OR UP=0 THEN RETURN
-7421 IF RF>=RO THEN PRINT "{down}Non hai fame: la tua Robustezza e' piena.":RETURN
+7421 IF RF>=RO THEN PRINT "{down}Non hai fame: Robustezza al massimo.":RETURN
 7422 UP=UP-1:RF=RF+3:IF RF>RO THEN RF=RO
 7423 POKE 56833,5:PRINT "{down}{lgrn}Mangi un Pane elfico: Ro";RF;"{left}/";RO;"{left}{wht}":RETURN
 ' --- scheda del personaggio: equipaggiamento della mod
