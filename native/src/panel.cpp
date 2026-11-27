@@ -137,26 +137,30 @@ void Panel::build(VM* vm, const Picture* pic, const std::string& subject) {
     const char* sname = spada == 50 ? "Lama di Fiamma" : spada == 75 ? "Spada del Vento" : spada == 100 ? "Spada dei Re" : spada ? "Spada Magica" : "";
     // armi: testo grigio = normale, giallo = magica; fondo bianco = benedetta
     // (magica e benedetta: fondo bianco con lettere arancio scuro)
-    int row = 27;
-    auto weaponLine = [&](const std::string& s, bool magic) {
-        std::string w = s.substr(0, 14);
-        if (blessed) { w.resize(14, ' '); text(2, row++, w, magic ? 8 : 0, false, 1); }
-        else text(2, row++, w, magic ? 7 : 15);
-    };
-    if (*sname) weaponLine(sname, true);
-    if (vm->varString("UA$", arma) && !arma.empty()) weaponLine(asciiOf(arma), false);
-    if (blessed && row == 27) weaponLine("arma benedetta", false);
-    if (vm->varString("UR$", armat) && !armat.empty() && row < 30) text(2, row++, asciiOf(armat).substr(0, 14), 3);
+    // una sola arma (UA$, bonus UB; magica se e' la spada di OS$) e una sola armatura (UR$, UR)
+    std::string wname = vm->varString("UA$", arma) ? asciiOf(arma) : "";
+    int wbonus = num("UB");
+    bool magic = spada > 0 && (wname.empty() || wname == sname);
+    if (wname.empty()) { wname = magic ? sname : "Spada"; if (magic) wbonus = spada; }
+    std::string w = wname.substr(0, 15);
+    if (blessed) { w.resize(15, ' '); text(1, 27, w, magic ? 8 : 0, false, 1); }
+    else text(1, 27, w, magic ? 7 : 15);
+    std::snprintf(buf, sizeof buf, wbonus > 0 ? " +%d%% attacco" : " nessun bonus", wbonus);
+    text(1, 28, buf, wbonus > 0 ? 13 : 11);
+    std::string aname = vm->varString("UR$", armat) && !armat.empty() ? asciiOf(armat) : "Giubba imbottita";
+    int prot = num("UR");
+    text(1, 29, aname.substr(0, 16), 15);
+    std::snprintf(buf, sizeof buf, prot > 0 ? " protezione %d" : " nessun bonus", prot);
+    text(1, 30, buf, prot > 0 ? 13 : 11);
     items[0].count = filtri; items[0].key = 0x85; items[0].keyName = "F1"; items[0].name = "Filtro magico";
     items[1].count = vm->varNumber("UP", v) ? (int)v : 0; items[1].key = 0x86; items[1].keyName = "F3"; items[1].name = "Pane elfico";
     for (int i = 0; i < 2; i++) {
         Consumable& it = items[i];
         int cx = 2 + i * 8;
-        it.px = cx * 8; it.py = 30 * 8;
+        it.px = cx * 8; it.py = 31 * 8;
         std::snprintf(buf, sizeof buf, "x%d", it.count);
-        text(cx + 2, 30, buf, it.count ? 1 : 11);
-        text(cx + 2, 31, it.keyName, it.count ? 13 : 11);
-        if (it.count) text(2, 32, "clic per usare", 11);
+        text(cx + 2, 31, buf, it.count ? 1 : 11);
+        text(cx + 2, 32, it.keyName, it.count ? 13 : 11);
     }
 }
 

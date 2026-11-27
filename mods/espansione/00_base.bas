@@ -25,7 +25,7 @@
 !HOOK 2670 GOSUB 7150
 !HOOK 2680 GOSUB 7160
 ' --- inizializzazione (a ogni nuova partita, prima della riga 10)
-7000 MV=1:POKE 56832,1:MP$="":POKE 56834,0:RETURN
+7000 MV=1:POKE 56832,1:MP$="":POKE 56834,0:UA$="Spada":UB=0:UR$="Giubba imbottita":UR=0:RETURN
 ' --- taverna e scheda del personaggio
 7100 POKE 56832,2:MP$="taverna":POKE 56834,1:RETURN
 ' --- scheda del personaggio: il suo ritratto
