@@ -70,7 +70,7 @@
 7664 ON UD GOTO 490,7800
 7666 TK=TK+2:POKE 56832,3:PRINT "{clr}La nave prende il largo...":GOSUB 50:IF INT(3*RND(0))>0 THEN PRINT "{down}Il mare e' calmo: viaggio tranquillo.":GOSUB 50:GOTO 7690
 7667 MP$="pirati":POKE 56834,1:PRINT "{down}{rvon}PIRATI delle Isole Nere !{rvof}":PRINT "Una galea nera punta sulla nave !":GOSUB 50:GOSUB 2790:IF UC=0 THEN 7685
-7668 PRINT "{down}Il capitano ti chiama al timone:":PRINT "{rvon}* 1 *{rvof} virare sottovento (Destrezza)":PRINT "{rvon}* 2 *{rvof} caricare la balista (Forza)":PRINT "{rvon}* 3 *{rvof} speronare la galea (Fortuna)"
+7668 GOSUB 4580:PRINT "{clr}Il capitano ti chiama al timone:":PRINT "{down}{rvon}* 1 *{rvof} virare sottovento":PRINT "    (Destrezza)":PRINT "{down}{rvon}* 2 *{rvof} caricare la balista":PRINT "    (Forza)":PRINT "{down}{rvon}* 3 *{rvof} speronare la galea":PRINT "    (Fortuna)"
 7669 GOSUB 2760:ON N GOTO 7670,7673,7676:PRINT "{up}{up}":GOTO 7669
 7670 MW=DE:GOSUB 7680:IF ZZ=1 THEN NM=INT(NM/2)+1:PRINT "{down}{lgrn}La nave sfugge alla galea: solo";NM:PRINT "pirati riescono ad abbordare.{wht}":GOTO 7685
 7671 PRINT "{down}La virata e' lenta: la galea vi":PRINT "abborda con tutti i pirati !":GOTO 7685
@@ -89,7 +89,7 @@
 7690 GOSUB 160:GOSUB 230:UC=0:IF UD=1 THEN PRINT "{clr}":GOTO 7800
 7691 PRINT "{down}Dopo 2 settimane sei di nuovo a casa.":GOSUB 4580:GOTO 340
 ' --- in mischia: chi e' della ciurma non puo' fuggire (riga 3430 originale)
-7695 IF UC=1 THEN PRINT "{down}Della ciurma non si fugge: combatti !":GOSUB 50:GOTO 3510
+7695 IF UC=1 THEN PRINT "{down}Della ciurma non si fugge: combatti !":GOSUB 240:GOTO 3510
 7696 GOSUB 60:PRINT "{down}Puoi fare la scelta di :":PRINT "* 1 * Tentare la fuga":PRINT "* 2 * Continuare il combattimento":GOTO 3440
 ' --- Kebir
 7800 POKE 56832,5:MP$="kebir":POKE 56834,1:PRINT "{clr}{yel}KEBIR{wht}, la citta' del Sultano":PRINT "{down}Minareti bianchi, vele colorate e il":PRINT "frastuono del gran mercato del porto."
