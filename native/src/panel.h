@@ -37,11 +37,12 @@ public:
     static const int W = 18, H = 34;
     uint8_t chars[W * H];
     uint8_t colors[W * H];
+    uint8_t cellBg[W * H];             // sfondo per cella (0xFF = quello del pannello)
     int bg = 0;
     Consumable items[2];               // 0 Filtro magico (F1), 1 Pane elfico (F3)
 
     void clear(int color);
-    void text(int x, int y, const std::string& ascii, int color, bool rvs = false);
+    void text(int x, int y, const std::string& ascii, int color, bool rvs = false, int back = -1);
     void box(int x0, int y0, int x1, int y1, int color);
     void build(VM* vm, const Picture* pic, const std::string& subject);
     void render(uint32_t* dst, int pitch) const;     // W*8 x H*8 pixel

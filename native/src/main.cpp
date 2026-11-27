@@ -687,7 +687,7 @@ int main(int argc, char** argv) {
             }
             if (frame == 560) saveShot(a, shotDir + "/4_gioco.bmp");
             if (frame == 565 && a.vm) a.vm->pushKey('1');
-            if (frame == 690 && a.vm) { a.vm->setNumber("UP", 2); a.vm->setNumber("RF", 6); }   // ferito, con 2 pani
+            if (frame == 690 && a.vm) { a.vm->setNumber("UP", 2); a.vm->setNumber("RF", 6); a.vm->setNumber("UK", 1); a.vm->setString("UA$", "\xC1SCIA"); }   // ferito, 2 pani, Ascia benedetta
             if (frame == 700) saveShot(a, shotDir + "/4b_taverna.bmp");
             if (frame == 705) { a.paused = true; }
             if (frame == 715) { saveShot(a, shotDir + "/5_pausa.bmp"); a.paused = false; a.endReason = "reset"; }

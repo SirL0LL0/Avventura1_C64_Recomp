@@ -65,6 +65,7 @@ public:
     bool varNumber(const std::string& name, double& out) const;
     bool arrayStrings(const std::string& name, std::vector<std::string>& out) const;   // es. "OS$"
     bool setNumber(const std::string& name, double v);   // solo per i test
+    bool setString(const std::string& name, const std::string& v);
     static std::string fmtNumber(double v);
     static double val(const std::string& s);
 

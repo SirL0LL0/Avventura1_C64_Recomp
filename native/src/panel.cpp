@@ -54,13 +54,14 @@ static uint8_t screenCode(char c) {
     return '?';
 }
 
-void Panel::clear(int color) { std::memset(chars, 0x20, sizeof chars); std::memset(colors, 1, sizeof colors); bg = color; }
+void Panel::clear(int color) { std::memset(chars, 0x20, sizeof chars); std::memset(colors, 1, sizeof colors); std::memset(cellBg, 0xFF, sizeof cellBg); bg = color; }
 
-void Panel::text(int x, int y, const std::string& s, int color, bool rvs) {
+void Panel::text(int x, int y, const std::string& s, int color, bool rvs, int back) {
     for (size_t i = 0; i < s.size() && x + (int)i < W; i++) {
         if (y < 0 || y >= H || x + (int)i < 0) continue;
         chars[y * W + x + i] = screenCode(s[i]) | (rvs ? 0x80 : 0);
         colors[y * W + x + i] = (uint8_t)color;
+        if (back >= 0) cellBg[y * W + x + i] = (uint8_t)back;
     }
 }
 
@@ -134,10 +135,17 @@ void Panel::build(VM* vm, const Picture* pic, const std::string& subject) {
             if (c0 == 0xD3 || c0 == 'S') { size_t p = os[i].find('+'); if (p != std::string::npos) spada = std::atoi(os[i].c_str() + p + 1); }
         }
     const char* sname = spada == 50 ? "Lama di Fiamma" : spada == 75 ? "Spada del Vento" : spada == 100 ? "Spada dei Re" : spada ? "Spada Magica" : "";
+    // armi: testo grigio = normale, giallo = magica; fondo bianco = benedetta
+    // (magica e benedetta: fondo bianco con lettere arancio scuro)
     int row = 27;
-    if (*sname) text(2, row++, sname, blessed ? 14 : 7);
-    if (vm->varString("UA$", arma) && !arma.empty()) text(2, row++, asciiOf(arma).substr(0, 14), blessed && !*sname ? 14 : 3);
-    if (blessed && row == 27) text(2, row++, "arma benedetta", 14);
+    auto weaponLine = [&](const std::string& s, bool magic) {
+        std::string w = s.substr(0, 14);
+        if (blessed) { w.resize(14, ' '); text(2, row++, w, magic ? 8 : 0, false, 1); }
+        else text(2, row++, w, magic ? 7 : 15);
+    };
+    if (*sname) weaponLine(sname, true);
+    if (vm->varString("UA$", arma) && !arma.empty()) weaponLine(asciiOf(arma), false);
+    if (blessed && row == 27) weaponLine("arma benedetta", false);
     if (vm->varString("UR$", armat) && !armat.empty() && row < 30) text(2, row++, asciiOf(armat).substr(0, 14), 3);
     items[0].count = filtri; items[0].key = 0x85; items[0].keyName = "F1"; items[0].name = "Filtro magico";
     items[1].count = vm->varNumber("UP", v) ? (int)v : 0; items[1].key = 0x86; items[1].keyName = "F3"; items[1].name = "Pane elfico";
@@ -153,13 +161,14 @@ void Panel::build(VM* vm, const Picture* pic, const std::string& subject) {
 }
 
 void Panel::render(uint32_t* dst, int pitch) const {
-    const uint32_t bgc = 0xFF000000 | C64_PALETTE[bg & 15];
+    const uint32_t bgcAll = 0xFF000000 | C64_PALETTE[bg & 15];
     for (int r = 0; r < H; r++)
         for (int c = 0; c < W; c++) {
             int i = r * W + c;
             uint8_t code = chars[i];
             bool inv = code & 0x80;
             uint32_t fg = 0xFF000000 | C64_PALETTE[colors[i] & 15];
+            uint32_t bgc = cellBg[i] == 0xFF ? bgcAll : 0xFF000000 | C64_PALETTE[cellBg[i] & 15];
             const uint8_t* g = FONT_LOWER[code & 0x7F];
             for (int yy = 0; yy < 8; yy++) {
                 uint8_t bits = inv ? (uint8_t)~g[yy] : g[yy];
