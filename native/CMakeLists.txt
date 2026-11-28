@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(Avventura1 CXX)
-set(APP_VERSION "0.1.0-beta" CACHE STRING "Versione mostrata nel launcher")
+set(APP_VERSION "0.2.0-beta" CACHE STRING "Versione mostrata nel launcher")
 add_compile_definitions(APP_VERSION="${APP_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)

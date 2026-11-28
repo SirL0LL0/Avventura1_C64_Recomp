@@ -1,9 +1,13 @@
-AVVENTURA 1 (FANTASY) - RECOMP  -  versione 0.1.0 beta
+AVVENTURA 1 (FANTASY) - RECOMP  -  versione 0.2.0 beta
 =====================================================
 
 Il gioco per Commodore 64 di A. Castellari, ricostruito per PC Windows.
 Il programma originale (un BASIC compilato) viene eseguito da una nuova
 macchina virtuale, senza emulare il C64.
+
+Questa versione contiene anche l'ESPANSIONE: una mod originale del progetto
+che aggiunge grafica, musica, nuove terre, missioni, mostri e armi, sempre
+in stile C64. Il gioco originale resta giocabile cosi' com'e'.
 
 
 COSA SERVE
@@ -19,15 +23,40 @@ COME SI GIOCA
 2. Avvia avventura1.exe.
 3. Clicca "FORNISCI COPIA (.TAP)" e scegli il file .tap,
    oppure trascina il file .tap sulla finestra.
-4. Clicca "GIOCA".
+4. Con "VERSIONE" scegli "Originale" o "Espansione".
+5. Clicca "GIOCA".
 
 Le scelte del gioco si cliccano col mouse; si illuminano al passaggio.
 Si puo' usare anche la tastiera:
   numeri / lettere ..... scelte dirette
   frecce su/giu + Invio  scegli la voce evidenziata
   F1 ................... bevi il Filtro magico (quando il gioco lo propone)
+  F3 ................... mangia un Pane elfico (Espansione)
   Esc .................. pausa (velocita', effetto CRT, ricomincia, menu)
   F11 .................. schermo intero
+
+
+L'ESPANSIONE
+------------
+- Pannello laterale con l'illustrazione di ogni scena (oltre 50, con i
+  personaggi a mezzobusto), la scheda del personaggio, l'arma e l'armatura
+  con i loro bonus e le icone cliccabili di Filtro magico e Pane elfico.
+- Colonna sonora per due SID: cinque brani tranquilli che si alternano e
+  cambiano a ogni giro; fanfara per le vittorie e tema della morte.
+- Nuove terre, raggiungibili dalla taverna (un viaggio per volta, al posto
+  della Carovana): Kho ai bordi della giungla e Kebir, la citta' del Sultano.
+- Per mare si paga il passaggio o ci si arruola nella ciurma: niente fuga
+  dai pirati, ma manovre navali decise dal tiro di dado.
+- Il Tempio di LYSS (riti e tre missioni), il Guaritore, l'Arena, il
+  Mercato e le tre imprese del Sultano di Kebir.
+- La missione segreta del Barone contro il Conte Movas e la scorta del
+  pellegrino Anselmo.
+- Nuovi mostri: Spettri, Idra, Basilisco, Scorpione gigante, Mummie,
+  Djinn, la strega del Lago di Lava, maledizioni che tolgono Forza e
+  Destrezza.
+- Una sola arma e una sola armatura: si parte con Spada e Giubba imbottita;
+  l'Armaiolo vende armi e armature, il Fabbro magico tre spade con un nome.
+- I salvataggi dell'Espansione si caricano anche con le versioni future.
 
 
 SALVATAGGI E DATI (VERSIONE PORTABLE)
@@ -38,15 +67,17 @@ Tutto viene scritto nella cartella "dati" accanto a avventura1.exe:
   dati\saves\ .......... avventure salvate sul "nastro virtuale"
 Per spostare il gioco con i salvataggi basta copiare la cartella.
 Non distribuire la cartella "dati": contiene dati del gioco originale.
+La cartella "mods" contiene l'Espansione: solo codice nuovo del progetto,
+che funziona unicamente con la copia originale del gioco.
 
 
 NOTE SULLA BETA
 ---------------
-- Il riconoscimento delle scelte cliccabili e' nuovo: se una scelta non si
-  evidenzia o si evidenzia male, usa la tastiera e segnala la schermata.
+- L'Espansione e' nuova: se trovi un testo che esce dallo schermo, una
+  scelta che non si evidenzia o un errore, segnala la schermata.
 - La velocita' "Originale" imita i tempi del C64; "Veloce" e "Turbo"
   accorciano le attese.
-- Il font e la grafica del launcher sono originali del progetto, non sono
+- Il font, la grafica e la musica sono originali del progetto, non sono
   la ROM dei caratteri Commodore.
 
 
