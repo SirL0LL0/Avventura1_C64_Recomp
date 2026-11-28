@@ -23,7 +23,7 @@ COME SI GIOCA
 2. Avvia avventura1.exe.
 3. Clicca "FORNISCI COPIA (.TAP)" e scegli il file .tap,
    oppure trascina il file .tap sulla finestra.
-4. Con "VERSIONE" scegli "Originale" o "Espansione".
+4. Parte con l'Espansione; con "VERSIONE" puoi scegliere "Originale".
 5. Clicca "GIOCA".
 
 Le scelte del gioco si cliccano col mouse; si illuminano al passaggio.

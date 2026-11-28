@@ -60,7 +60,7 @@ static void mainMenu(App& a) {
                      a.modNames.size() > 1 ? "Originale o Espansione (grafica, musica, nuove avventure)" : "Nessuna mod nella cartella mods")) {
             a.modSel = (a.modSel + 1) % (int)a.modNames.size();
             const std::string& fpath = a.modFiles[a.modSel];
-            a.cfg.mod = fpath.empty() ? "" : fpath.substr(fpath.find_last_of("/\\") + 1);
+            a.cfg.mod = fpath.empty() ? "originale" : fpath.substr(fpath.find_last_of("/\\") + 1);
             a.saveConfig();
         }
     }

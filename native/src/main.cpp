@@ -143,7 +143,9 @@ void App::scanMods() {
     }
     SDL_free(list);
     modSel = 0;
-    for (size_t i = 1; i < modFiles.size(); i++) if (!cfg.mod.empty() && modFiles[i].find(cfg.mod) != std::string::npos) modSel = (int)i;
+    // versione predefinita: l'Espansione, se non e' stata scelta un'altra versione ("originale" = gioco puro)
+    std::string want = cfg.mod.empty() ? "espansione" : cfg.mod;
+    for (size_t i = 1; i < modFiles.size(); i++) if (want != "originale" && modFiles[i].find(want) != std::string::npos) modSel = (int)i;
 }
 
 void App::startGame() {
